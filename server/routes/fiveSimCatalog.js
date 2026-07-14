@@ -58,7 +58,8 @@ function normalizeProducts(payload) {
   const pushItem = (item, fallbackKey = '') => {
     if (!item || typeof item !== 'object') return
 
-    const name = String(item.name || item.product || item.service || item.title || item.label || fallbackKey || '').trim()
+    const nameSource = item.name || item.product || item.service || item.title || item.label || fallbackKey || ''
+    const name = String(nameSource || '').trim()
     if (!name) return
 
     const qty = toNumber(item.qty ?? item.Qty ?? item.stock ?? item.available ?? item.count ?? 0)
@@ -66,8 +67,8 @@ function normalizeProducts(payload) {
     const category = String(item.category || item.Category || item.type || item.group || 'SMS').trim() || 'SMS'
 
     items.push({
-      id: name.toLowerCase(),
-      name,
+      id: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      name: name.replace(/_/g, ' ').replace(/\s+/g, ' ').trim(),
       qty,
       price,
       category,
@@ -94,7 +95,7 @@ function normalizeProducts(payload) {
       if (Array.isArray(value)) {
         value.forEach((item) => pushItem(item, key))
       } else if (value && typeof value === 'object') {
-        pushItem(value, key)
+        pushItem({ ...value, name: key }, key)
       }
     })
   }
