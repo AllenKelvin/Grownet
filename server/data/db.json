@@ -1,0 +1,268 @@
+{
+  "User": [
+    {
+      "name": "Adaeze Demo",
+      "email": "demo@grownet.app",
+      "wallet_balance": 386.37,
+      "currency": "GHS",
+      "account_status": "Active",
+      "created_at": "2026-06-30T19:11:04.562Z",
+      "_id": "mr10vek2q808vv"
+    }
+  ],
+  "Service": [
+    {
+      "local_service_id": 1,
+      "provider_service_id": 101,
+      "category": "Instagram",
+      "name": "Instagram Followers [Real][Max 50K]",
+      "wholesale_rate_usd": 0.45,
+      "local_rate": 2488.5,
+      "min_quantity": 50,
+      "max_quantity": 50000,
+      "refill_policy": true,
+      "_id": "mr10vek55cxdai"
+    },
+    {
+      "local_service_id": 2,
+      "provider_service_id": 102,
+      "category": "Instagram",
+      "name": "Instagram Likes [Instant][Max 100K]",
+      "wholesale_rate_usd": 0.2,
+      "local_rate": 1106,
+      "min_quantity": 20,
+      "max_quantity": 100000,
+      "refill_policy": false,
+      "_id": "mr10vek5qetloa"
+    },
+    {
+      "local_service_id": 3,
+      "provider_service_id": 103,
+      "category": "Instagram",
+      "name": "Instagram Views [Story + Reel]",
+      "wholesale_rate_usd": 0.05,
+      "local_rate": 276.5,
+      "min_quantity": 100,
+      "max_quantity": 500000,
+      "refill_policy": false,
+      "_id": "mr10vek5n7h1h9"
+    },
+    {
+      "local_service_id": 4,
+      "provider_service_id": 201,
+      "category": "TikTok",
+      "name": "TikTok Followers [HQ][Max 80K]",
+      "wholesale_rate_usd": 0.6,
+      "local_rate": 3318,
+      "min_quantity": 50,
+      "max_quantity": 80000,
+      "refill_policy": true,
+      "_id": "mr10vek5nkogom"
+    },
+    {
+      "local_service_id": 5,
+      "provider_service_id": 202,
+      "category": "TikTok",
+      "name": "TikTok Likes [Fast][Max 200K]",
+      "wholesale_rate_usd": 0.15,
+      "local_rate": 829.5,
+      "min_quantity": 20,
+      "max_quantity": 200000,
+      "refill_policy": false,
+      "_id": "mr10vek6u97a31"
+    },
+    {
+      "local_service_id": 6,
+      "provider_service_id": 203,
+      "category": "TikTok",
+      "name": "TikTok Views [Real][Max 1M]",
+      "wholesale_rate_usd": 0.02,
+      "local_rate": 110.6,
+      "min_quantity": 100,
+      "max_quantity": 1000000,
+      "refill_policy": false,
+      "_id": "mr10vek6moweum"
+    },
+    {
+      "local_service_id": 7,
+      "provider_service_id": 301,
+      "category": "Twitter / X",
+      "name": "Twitter/X Followers [Stable]",
+      "wholesale_rate_usd": 0.8,
+      "local_rate": 4424,
+      "min_quantity": 50,
+      "max_quantity": 30000,
+      "refill_policy": true,
+      "_id": "mr10vek6u4a48z"
+    },
+    {
+      "local_service_id": 8,
+      "provider_service_id": 302,
+      "category": "Twitter / X",
+      "name": "Twitter/X Retweets [Instant]",
+      "wholesale_rate_usd": 0.35,
+      "local_rate": 1935.5,
+      "min_quantity": 20,
+      "max_quantity": 50000,
+      "refill_policy": false,
+      "_id": "mr10vek7queddc"
+    },
+    {
+      "local_service_id": 9,
+      "provider_service_id": 401,
+      "category": "YouTube",
+      "name": "YouTube Subscribers [Real][Max 30K]",
+      "wholesale_rate_usd": 1.2,
+      "local_rate": 6636,
+      "min_quantity": 50,
+      "max_quantity": 30000,
+      "refill_policy": true,
+      "_id": "mr10vek73duezq"
+    },
+    {
+      "local_service_id": 10,
+      "provider_service_id": 402,
+      "category": "YouTube",
+      "name": "YouTube Views [HR][Max 500K]",
+      "wholesale_rate_usd": 0.3,
+      "local_rate": 1659,
+      "min_quantity": 500,
+      "max_quantity": 500000,
+      "refill_policy": false,
+      "_id": "mr10vek74k0onm"
+    },
+    {
+      "local_service_id": 11,
+      "provider_service_id": 403,
+      "category": "YouTube",
+      "name": "YouTube Watch Hours [4000h]",
+      "wholesale_rate_usd": 2.5,
+      "local_rate": 13825,
+      "min_quantity": 1000,
+      "max_quantity": 100000,
+      "refill_policy": true,
+      "_id": "mr10vek740nf9o"
+    },
+    {
+      "local_service_id": 12,
+      "provider_service_id": 501,
+      "category": "Facebook",
+      "name": "Facebook Page Likes [Real]",
+      "wholesale_rate_usd": 0.7,
+      "local_rate": 3871,
+      "min_quantity": 100,
+      "max_quantity": 100000,
+      "refill_policy": true,
+      "_id": "mr10vek78pmu1r"
+    },
+    {
+      "local_service_id": 13,
+      "provider_service_id": 502,
+      "category": "Facebook",
+      "name": "Facebook Post Reactions",
+      "wholesale_rate_usd": 0.4,
+      "local_rate": 2212,
+      "min_quantity": 50,
+      "max_quantity": 50000,
+      "refill_policy": false,
+      "_id": "mr10vek8sqts7z"
+    },
+    {
+      "local_service_id": 14,
+      "provider_service_id": 601,
+      "category": "Telegram",
+      "name": "Telegram Channel Members",
+      "wholesale_rate_usd": 0.5,
+      "local_rate": 2765,
+      "min_quantity": 100,
+      "max_quantity": 200000,
+      "refill_policy": true,
+      "_id": "mr10vek84drpei"
+    },
+    {
+      "local_service_id": 15,
+      "provider_service_id": 602,
+      "category": "Telegram",
+      "name": "Telegram Post Views",
+      "wholesale_rate_usd": 0.1,
+      "local_rate": 553,
+      "min_quantity": 100,
+      "max_quantity": 1000000,
+      "refill_policy": false,
+      "_id": "mr10vek8yg9v6a"
+    }
+  ],
+  "Order": [
+    {
+      "user_id": "mr10vek2q808vv",
+      "local_service_id": 1,
+      "target_link": "https://instagram.com/test",
+      "quantity": 100,
+      "total_charged_local": 248.85,
+      "currency_used": "NGN",
+      "provider_order_id": "PRT-117181",
+      "order_status": "In Progress",
+      "remains": 100,
+      "created_at": "2026-06-30T19:13:34.470Z",
+      "updated_at": "2026-07-02T17:48:36.121Z",
+      "_id": "mr10ym86qvybwv"
+    },
+    {
+      "user_id": "mr10vek2q808vv",
+      "local_service_id": 2,
+      "target_link": "https://tiktok.com/a",
+      "quantity": 50,
+      "total_charged_local": 55.3,
+      "currency_used": "NGN",
+      "provider_order_id": "PRT-664956",
+      "order_status": "In Progress",
+      "remains": 100,
+      "created_at": "2026-06-30T19:13:37.560Z",
+      "updated_at": "2026-07-02T17:48:36.122Z",
+      "_id": "mr10yom0aho9f3"
+    },
+    {
+      "user_id": "mr10vek2q808vv",
+      "local_service_id": 3,
+      "target_link": "https://tiktok.com/b",
+      "quantity": 200,
+      "total_charged_local": 55.3,
+      "currency_used": "NGN",
+      "provider_order_id": "PRT-382696",
+      "order_status": "In Progress",
+      "remains": 100,
+      "created_at": "2026-06-30T19:13:37.560Z",
+      "updated_at": "2026-07-02T17:48:36.122Z",
+      "_id": "mr10yom0d79vv6"
+    }
+  ],
+  "Deposit": [
+    {
+      "user_id": "mr10vek2q808vv",
+      "amount": 5000,
+      "currency": "NGN",
+      "method": "mtn",
+      "status": "Completed",
+      "created_at": "2026-06-30T19:13:37.472Z",
+      "_id": "mr10yojki7ob9j"
+    },
+    {
+      "user_id": "mr10vek2q808vv",
+      "amount": 5000,
+      "currency": "NGN",
+      "method": "telecel",
+      "status": "Completed",
+      "created_at": "2026-07-01T20:07:06.467Z",
+      "_id": "mr2ibbab0yasip"
+    },
+    {
+      "user_id": "mr10vek2q808vv",
+      "amount": 5000,
+      "currency": "NGN",
+      "method": "card",
+      "status": "Completed",
+      "created_at": "2026-07-01T20:07:23.558Z",
+      "_id": "mr2iboh2k7zrsa"
+    }
+  ]
+}

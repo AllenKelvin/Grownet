@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+  * {
+    @apply border-ink-700;
+  }
+  body {
+    @apply bg-ink-950 text-slate-200 font-sans;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection {
+    @apply bg-brand-500/30 text-white;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-ink-700 bg-ink-900/70 backdrop-blur-sm;
+  }
+  .card-hover {
+    @apply transition-all duration-200 hover:border-ink-600 hover:bg-ink-850;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn bg-brand-500 text-ink-950 hover:bg-brand-400 shadow-glow active:scale-[0.98];
+  }
+  .btn-ghost {
+    @apply btn border border-ink-700 bg-ink-850 text-slate-200 hover:border-ink-600 hover:bg-ink-800;
+  }
+  .btn-accent {
+    @apply btn bg-accent-500 text-ink-950 hover:bg-accent-400 active:scale-[0.98];
+  }
+  .input {
+    @apply w-full rounded-xl border border-ink-700 bg-ink-850 px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 outline-none transition-colors focus:border-brand-500 focus:ring-1 focus:ring-brand-500/40;
+  }
+  .label {
+    @apply mb-1.5 block text-xs font-medium uppercase tracking-wider text-slate-400;
+  }
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-lg border border-ink-700 bg-ink-850 px-3 py-1.5 text-xs font-medium text-slate-300;
+  }
+  .table-row-hover {
+    @apply transition-colors hover:bg-ink-850;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #0b0f1a;
+}
+::-webkit-scrollbar-thumb {
+  background: #273049;
+  border-radius: 6px;
+  border: 2px solid #0b0f1a;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3a4663;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fadeIn 0.25s ease-out;
+}
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(6,217,116,0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(6,217,116,0); }
+}
+.pulse-glow {
+  animation: pulseGlow 2s infinite;
+}
