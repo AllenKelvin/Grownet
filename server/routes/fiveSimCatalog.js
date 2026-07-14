@@ -42,10 +42,14 @@ function normalizeCountry(entry, fallbackKey = '') {
   const codeValue = rawCode && typeof rawCode === 'object' ? Object.keys(rawCode)[0] || fallbackKey : rawCode || fallbackKey
   const normalizedCode = String(codeValue || fallbackKey || name).toLowerCase()
   const codeDisplay = String(codeValue || fallbackKey || name).toUpperCase()
+  const providerSlug = String(fallbackKey || normalizedCode || name)
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '')
 
   return {
-    id: normalizedCode,
-    value: normalizedCode,
+    id: providerSlug || normalizedCode,
+    value: providerSlug || normalizedCode,
     label: name,
     code: codeDisplay,
     flag: rawFlag || getFlagEmoji(codeDisplay) || '🌐',
