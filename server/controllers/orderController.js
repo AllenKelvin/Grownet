@@ -23,8 +23,7 @@ async function getUserRecord(userId) {
   const direct = await collection.findOne(buildUserQuery(userId))
   if (direct) return direct
 
-  const fallbackUser = await collection.findOne({ email: 'demo@grownet.app' })
-  return fallbackUser
+  return null
 }
 
 async function updateUserRecord(userId, update) {
@@ -32,9 +31,7 @@ async function updateUserRecord(userId, update) {
   const direct = await collection.findOneAndUpdate(buildUserQuery(userId), update, { returnDocument: 'after' })
   if (direct) return direct
 
-  const fallbackUser = await collection.findOne({ email: 'demo@grownet.app' })
-  if (!fallbackUser) return null
-  return collection.findOneAndUpdate({ _id: fallbackUser._id }, update, { returnDocument: 'after' })
+  return null
 }
 
 export async function placeOrder(req, res) {

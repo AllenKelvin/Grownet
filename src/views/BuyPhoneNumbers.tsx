@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   CheckCircle2,
   Copy,
-  Globe2,
   Loader2,
   MessageCircleMore,
   MessageSquareText,
@@ -13,26 +12,7 @@ import {
   TimerReset,
 } from 'lucide-react'
 import { PageHeader } from '../components/ui'
-import { api } from '../lib/api'
 import { formatMoney } from '../lib/currency'
-
-const COUNTRY_OPTIONS = [
-  { value: 'england', label: 'England', flag: '🇬🇧', code: '+44' },
-  { value: 'usa', label: 'USA', flag: '🇺🇸', code: '+1' },
-  { value: 'canada', label: 'Canada', flag: '🇨🇦', code: '+1' },
-  { value: 'nigeria', label: 'Nigeria', flag: '🇳🇬', code: '+234' },
-  { value: 'ghana', label: 'Ghana', flag: '🇬🇭', code: '+233' },
-  { value: 'france', label: 'France', flag: '🇫🇷', code: '+33' },
-]
-
-const APP_OPTIONS = [
-  { id: 'telegram', label: 'Telegram', icon: MessageCircleMore, baseUsd: 1.45, stock: 342, accent: 'from-sky-500/20 to-cyan-500/10' },
-  { id: 'whatsapp', label: 'WhatsApp', icon: MessageCircleMore, baseUsd: 1.82, stock: 268, accent: 'from-emerald-500/20 to-lime-500/10' },
-  { id: 'google', label: 'Google', icon: ShieldCheck, baseUsd: 2.1, stock: 195, accent: 'from-brand-500/20 to-violet-500/10' },
-  { id: 'tiktok', label: 'TikTok', icon: Sparkles, baseUsd: 2.54, stock: 157, accent: 'from-fuchsia-500/20 to-pink-500/10' },
-  { id: 'discord', label: 'Discord', icon: MessageSquareText, baseUsd: 1.63, stock: 144, accent: 'from-amber-500/20 to-orange-500/10' },
-  { id: 'paypal', label: 'PayPal', icon: ShieldCheck, baseUsd: 2.95, stock: 99, accent: 'from-blue-500/20 to-indigo-500/10' },
-]
 
 function formatCountdown(ms: number) {
   const safe = Math.max(0, ms)
@@ -41,30 +21,44 @@ function formatCountdown(ms: number) {
   return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 
+function getProductMeta(name: string) {
+  const label = String(name || '').toLowerCase()
+  if (label.includes('telegram')) {
+    return { icon: MessageCircleMore, accent: 'from-sky-500/20 to-cyan-500/10' }
+  }
+  if (label.includes('whatsapp')) {
+    return { icon: MessageCircleMore, accent: 'from-emerald-500/20 to-lime-500/10' }
+  }
+  if (label.includes('google')) {
+    return { icon: ShieldCheck, accent: 'from-brand-500/20 to-violet-500/10' }
+  }
+  if (label.includes('tiktok')) {
+    return { icon: Sparkles, accent: 'from-fuchsia-500/20 to-pink-500/10' }
+  }
+  if (label.includes('discord')) {
+    return { icon: MessageSquareText, accent: 'from-amber-500/20 to-orange-500/10' }
+  }
+  return { icon: ShieldCheck, accent: 'from-blue-500/20 to-indigo-500/10' }
+}
+
 function generatePhoneNumber(countryCode: string, appLabel: string) {
   const suffix = `${Math.floor(1000 + Math.random() * 9000)}`
   return `${countryCode} ${appLabel.slice(0, 2).toUpperCase()}${suffix}`
 }
 
 export default function BuyPhoneNumbers({ user }) {
-  const [selectedCountry, setSelectedCountry] = useState('usa')
-  const [selectedApp, setSelectedApp] = useState('telegram')
+  const [countries, setCountries] = useState<any[]>([])
+  const [products, setProducts] = useState<any[]>([])
+  const [selectedCountry, setSelectedCountry] = useState('')
+  const [selectedProduct, setSelectedProduct] = useState<any | null>(null)
   const [countrySearch, setCountrySearch] = useState('')
   const [appSearch, setAppSearch] = useState('')
   const [showAllApps, setShowAllApps] = useState(false)
-  const [orders, setOrders] = useState<any[]>([
-    {
-      id: 'seed-1',
-      country: 'USA',
-      app: 'Telegram',
-      phoneNumber: '+1 TG10345',
-      expiresAt: Date.now() + 14 * 60 * 1000,
-      code: 'A9D2',
-      status: 'Waiting for SMS OTP code...',
-    },
-  ])
+  const [orders, setOrders] = useState<any[]>([])
   const [walletBalance, setWalletBalance] = useState(user?.wallet_balance || 0)
   const [now, setNow] = useState(Date.now())
+  const [loadingCountries, setLoadingCountries] = useState(true)
+  const [loadingProducts, setLoadingProducts] = useState(false)
   const [buying, setBuying] = useState(false)
   const [activeModal, setActiveModal] = useState<any | null>(null)
   const [copied, setCopied] = useState(false)
@@ -85,31 +79,83 @@ export default function BuyPhoneNumbers({ user }) {
     return () => window.clearTimeout(timeout)
   }, [copied])
 
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch('/api/sms/countries')
+        const data = await res.json()
+        if (!cancelled) {
+          const nextCountries = data.countries || []
+          setCountries(nextCountries)
+          if (!selectedCountry && nextCountries.length) {
+            setSelectedCountry(nextCountries[0].value)
+          }
+        }
+      } catch (error) {
+        console.error(error)
+      } finally {
+        if (!cancelled) setLoadingCountries(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!selectedCountry) {
+      setProducts([])
+      setSelectedProduct(null)
+      return
+    }
+
+    let cancelled = false
+    ;(async () => {
+      try {
+        setLoadingProducts(true)
+        const res = await fetch(`/api/sms/products/${encodeURIComponent(selectedCountry)}`)
+        const data = await res.json()
+        if (!cancelled) {
+          const nextProducts = data.products || []
+          setProducts(nextProducts)
+          setSelectedProduct(nextProducts[0] || null)
+        }
+      } catch (error) {
+        console.error(error)
+      } finally {
+        if (!cancelled) setLoadingProducts(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [selectedCountry])
+
   const currency = (user?.currency || 'GHS').toUpperCase()
 
   const visibleApps = useMemo(() => {
-    const filtered = APP_OPTIONS.filter((app) => app.label.toLowerCase().includes(appSearch.toLowerCase()))
-    return showAllApps ? filtered : filtered.slice(0, 4)
-  }, [appSearch, showAllApps])
+    const filtered = (products || []).filter((app) => app.name.toLowerCase().includes(appSearch.toLowerCase()))
+    return showAllApps ? filtered : filtered.slice(0, 5)
+  }, [products, appSearch, showAllApps])
 
   const visibleCountries = useMemo(() => {
-    return COUNTRY_OPTIONS.filter((country) => country.label.toLowerCase().includes(countrySearch.toLowerCase()))
-  }, [countrySearch])
+    return countries.filter((country) => country.label.toLowerCase().includes(countrySearch.toLowerCase()))
+  }, [countries, countrySearch])
 
-  const selectedCountryMeta = COUNTRY_OPTIONS.find((country) => country.value === selectedCountry) || COUNTRY_OPTIONS[0]
-  const selectedAppMeta = APP_OPTIONS.find((app) => app.id === selectedApp) || APP_OPTIONS[0]
+  const selectedCountryMeta = countries.find((country) => country.value === selectedCountry) || countries[0] || null
+  const selectedProductMeta = selectedProduct || null
 
   const localizedPrice = useMemo(() => {
-    const base = selectedAppMeta.baseUsd
-    if (currency === 'NGN') return base * 1370
-    if (currency === 'GHS') return base * 11.4
-    return base
-  }, [currency, selectedAppMeta.baseUsd])
+    return Number((selectedProductMeta?.price || 0).toFixed(2))
+  }, [selectedProductMeta])
 
   const handleBuy = async () => {
-    if (!selectedCountryMeta || !selectedAppMeta) return
+    if (!selectedCountryMeta || !selectedProductMeta) return
     if (walletBalance < localizedPrice) {
-      setFeedback(`Insufficient balance for ${selectedAppMeta.label} in ${selectedCountryMeta.label}.`)
+      setFeedback(`Insufficient balance for ${selectedProductMeta.name} in ${selectedCountryMeta.label}.`)
       return
     }
 
@@ -117,42 +163,32 @@ export default function BuyPhoneNumbers({ user }) {
     setFeedback('')
 
     try {
-      const response = await api.mockSmsBuy({
-        userBalance: walletBalance,
-        currency,
-        country: selectedCountryMeta.value,
-        app: selectedAppMeta.label,
-        tierLabel: selectedAppMeta.label,
-        priceUsd: selectedAppMeta.baseUsd,
+      const res = await fetch('/api/sms/buy-number', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          country: selectedCountryMeta.value,
+          product: selectedProductMeta,
+          currency,
+        }),
       })
-
-      const phoneNumber = response.order?.phoneNumber || generatePhoneNumber(selectedCountryMeta.code, selectedAppMeta.label)
+      const data = await res.json()
       const nextOrder = {
-        id: response.order?.id || `sms-${Date.now()}`,
+        id: data.order?.id || `sms-${Date.now()}`,
         country: selectedCountryMeta.label,
-        app: selectedAppMeta.label,
-        phoneNumber,
-        expiresAt: response.order?.expiresAt || Date.now() + 15 * 60 * 1000,
-        code: response.order?.statusCode || 'PENDING',
-        status: 'Waiting for SMS OTP code...',
+        app: selectedProductMeta.name,
+        phoneNumber: data.order?.phoneNumber || generatePhoneNumber(selectedCountryMeta.code || '+', selectedProductMeta.name),
+        expiresAt: data.order?.expiresAt || Date.now() + 15 * 60 * 1000,
+        code: data.order?.statusCode || 'PENDING',
+        status: data.order?.status || 'Waiting for SMS OTP code...',
       }
 
       setOrders((prev) => [nextOrder, ...prev].slice(0, 6))
-      setWalletBalance(response.balanceAfter ?? Math.max(walletBalance - localizedPrice, 0))
+      setWalletBalance((prev) => Math.max(prev - (data.order?.price || localizedPrice), 0))
       setActiveModal(nextOrder)
-    } catch {
-      const fallback = {
-        id: `sms-${Date.now()}`,
-        country: selectedCountryMeta.label,
-        app: selectedAppMeta.label,
-        phoneNumber: generatePhoneNumber(selectedCountryMeta.code, selectedAppMeta.label),
-        expiresAt: Date.now() + 15 * 60 * 1000,
-        code: 'PENDING',
-        status: 'Waiting for SMS OTP code...',
-      }
-      setOrders((prev) => [fallback, ...prev].slice(0, 6))
-      setWalletBalance((prev) => Math.max(prev - localizedPrice, 0))
-      setActiveModal(fallback)
+    } catch (error) {
+      console.error(error)
+      setFeedback('The activation request could not be created. Please try again.')
     } finally {
       setBuying(false)
     }
@@ -170,7 +206,7 @@ export default function BuyPhoneNumbers({ user }) {
     <div>
       <PageHeader
         title="Buy Phone Numbers"
-        subtitle="Reserve virtual numbers through a 5sim-style flow with localized pricing and live OTP tracking."
+        subtitle="Browse live 5sim countries and current in-stock services, then place an activation request instantly."
       />
 
       <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
@@ -185,7 +221,7 @@ export default function BuyPhoneNumbers({ user }) {
                 onClick={() => setShowAllApps((value) => !value)}
                 className="rounded-full border border-brand-500/20 bg-brand-500/10 px-3 py-1.5 text-xs font-medium text-brand-300"
               >
-                {showAllApps ? 'Show fewer' : 'Show all 1205'}
+                {showAllApps ? 'Show fewer' : `Show all ${products.length}`}
               </button>
             </div>
 
@@ -199,38 +235,46 @@ export default function BuyPhoneNumbers({ user }) {
               />
             </div>
 
-            <div className="space-y-2">
-              {visibleApps.map((app) => {
-                const Icon = app.icon
-                const selected = app.id === selectedApp
-                return (
-                  <button
-                    key={app.id}
-                    onClick={() => setSelectedApp(app.id)}
-                    className={`flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left transition ${selected ? 'border-brand-500/40 bg-slate-800/70 shadow-[0_0_0_1px_rgba(14,165,233,0.15)]' : 'border-ink-700 bg-ink-850/70 hover:border-ink-600'}`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br ${app.accent} text-slate-100`}>
-                        <Icon size={16} />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <Star size={13} className="text-amber-400" fill="currentColor" />
-                          <p className="text-sm font-semibold text-white">{app.label}</p>
+            {loadingProducts ? (
+              <div className="rounded-2xl border border-ink-700 bg-ink-850/70 p-3 text-sm text-slate-400">Loading live products…</div>
+            ) : visibleApps.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-ink-700 bg-ink-850/60 p-4 text-sm text-slate-500">
+                No in-stock services are available for this country yet.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {visibleApps.map((app) => {
+                  const { icon: Icon, accent } = getProductMeta(app.name)
+                  const selected = app.name === selectedProductMeta?.name
+                  return (
+                    <button
+                      key={app.id || app.name}
+                      onClick={() => setSelectedProduct(app)}
+                      className={`flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left transition ${selected ? 'border-brand-500/40 bg-slate-800/70 shadow-[0_0_0_1px_rgba(14,165,233,0.15)]' : 'border-ink-700 bg-ink-850/70 hover:border-ink-600'}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br ${accent} text-slate-100`}>
+                          <Icon size={16} />
                         </div>
-                        <p className="mt-1 text-xs text-slate-500">from {formatMoney(localizedPrice, currency)}</p>
-                        <p className="text-xs font-medium text-emerald-400">{app.stock} in stock</p>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <Star size={13} className="text-amber-400" fill="currentColor" />
+                            <p className="text-sm font-semibold text-white">{app.name}</p>
+                          </div>
+                          <p className="mt-1 text-xs text-slate-500">from {formatMoney(app.price, currency)}</p>
+                          <p className="text-xs font-medium text-emerald-400">{app.qty} in stock</p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="rounded-full bg-ink-900 px-2.5 py-1 text-[11px] uppercase tracking-[0.2em] text-slate-500">
-                        {app.label}
-                      </span>
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-full bg-ink-900 px-2.5 py-1 text-[11px] uppercase tracking-[0.2em] text-slate-500">
+                          {app.category}
+                        </span>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
 
           <div className="card p-5">
@@ -249,24 +293,30 @@ export default function BuyPhoneNumbers({ user }) {
               />
             </div>
 
-            <div className="space-y-2">
-              {visibleCountries.map((country) => {
-                const selected = country.value === selectedCountry
-                return (
-                  <button
-                    key={country.value}
-                    onClick={() => setSelectedCountry(country.value)}
-                    className={`flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left transition ${selected ? 'border-brand-500/40 bg-slate-800/70' : 'border-ink-700 bg-ink-850/70 hover:border-ink-600'}`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg">{country.flag}</span>
-                      <span className="text-sm font-medium text-slate-200">{country.label}</span>
-                    </div>
-                    <span className="text-xs text-slate-500">{country.code}</span>
-                  </button>
-                )
-              })}
-            </div>
+            {loadingCountries ? (
+              <div className="rounded-2xl border border-ink-700 bg-ink-850/70 p-3 text-sm text-slate-400">Loading live countries…</div>
+            ) : visibleCountries.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-ink-700 bg-ink-850/60 p-4 text-sm text-slate-500">No countries available right now.</div>
+            ) : (
+              <div className="space-y-2">
+                {visibleCountries.map((country) => {
+                  const selected = country.value === selectedCountry
+                  return (
+                    <button
+                      key={country.value}
+                      onClick={() => setSelectedCountry(country.value)}
+                      className={`flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left transition ${selected ? 'border-brand-500/40 bg-slate-800/70' : 'border-ink-700 bg-ink-850/70 hover:border-ink-600'}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-lg">{country.flag || '🌐'}</span>
+                        <span className="text-sm font-medium text-slate-200">{country.label}</span>
+                      </div>
+                      <span className="text-xs text-slate-500">{country.code}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
 
           <div className="card p-5">
@@ -276,18 +326,18 @@ export default function BuyPhoneNumbers({ user }) {
                 <h2 className="mt-1 text-lg font-semibold text-white">Select operator</h2>
               </div>
               <div className="rounded-full bg-ink-800 px-3 py-1 text-xs text-slate-500">
-                {selectedCountryMeta.label} • {selectedAppMeta.label}
+                {selectedCountryMeta?.label || 'Select a country'} • {selectedProductMeta?.name || 'Select a service'}
               </div>
             </div>
             <div className="rounded-2xl border border-dashed border-ink-700 bg-ink-850/60 p-4 text-sm text-slate-400">
-              <p className="font-medium text-slate-300">Select service and country</p>
-              <p className="mt-1 text-sm text-slate-500">Choose a provider, confirm your destination, and buy a number instantly.</p>
+              <p className="font-medium text-slate-300">Live catalog is now connected</p>
+              <p className="mt-1 text-sm text-slate-500">Choose a country, pick an in-stock service, and place a real activation request instantly.</p>
             </div>
 
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <button
                 onClick={handleBuy}
-                disabled={buying}
+                disabled={buying || !selectedCountryMeta || !selectedProductMeta}
                 className="inline-flex items-center gap-2 rounded-2xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-ink-950 transition hover:bg-brand-400 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {buying ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
@@ -363,7 +413,7 @@ export default function BuyPhoneNumbers({ user }) {
               </span>
             </div>
             <p className="mt-2 text-xs text-slate-500">
-              Mock flows mirror the real activation lifecycle so you can attach a provider later without changing the UI.
+              Each purchase deducts the live GHS cost from your wallet and adds the number to your log.
             </p>
           </div>
         </div>

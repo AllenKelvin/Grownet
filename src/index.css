@@ -9,8 +9,13 @@
   * {
     @apply border-ink-700;
   }
+  html, body, #root {
+    min-height: 100%;
+    overflow-x: hidden;
+  }
   body {
     @apply bg-ink-950 text-slate-200 font-sans;
+    min-height: 100dvh;
     -webkit-font-smoothing: antialiased;
   }
   ::selection {

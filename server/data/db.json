@@ -1,8 +1,8 @@
 {
   "User": [
     {
-      "name": "Adaeze Demo",
-      "email": "demo@grownet.app",
+      "name": "Default User",
+      "email": "default@grownet.app",
       "wallet_balance": 386.37,
       "currency": "GHS",
       "account_status": "Active",

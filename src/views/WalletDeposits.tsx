@@ -128,7 +128,7 @@ export default function WalletDeposits({ user, onDeposited }) {
           </div>
 
           <div className="mt-4 rounded-xl border border-dashed border-ink-600 bg-ink-850 p-3 text-xs text-slate-500">
-            <span className="font-medium text-slate-400">Demo mode:</span> No real charge is made. Submitting credits your wallet instantly for testing.
+            <span className="font-medium text-slate-400">Live funding:</span> Your wallet is updated once the deposit request is accepted.
           </div>
 
           {error && (

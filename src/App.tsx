@@ -104,7 +104,8 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-ink-950 text-slate-200">
+    <div className="min-h-screen overflow-x-hidden bg-ink-950 text-slate-200">
+      {mobileOpen && <div className="fixed inset-0 z-10 bg-black/60 md:hidden" onClick={() => setMobileOpen(false)} />}
       {/* Mobile top bar */}
       <div className="md:hidden sticky top-0 z-30 flex items-center justify-between border-b border-ink-700 bg-ink-900/90 px-4 py-3 backdrop-blur">
         <Brand />
@@ -118,7 +119,7 @@ export default function App() {
         <aside
           className={`${
             mobileOpen ? 'block' : 'hidden'
-          } md:block fixed md:sticky top-0 z-20 h-screen w-64 shrink-0 border-r border-ink-700 bg-ink-900/80 backdrop-blur-md`}
+          } md:block fixed md:sticky top-0 z-20 h-screen w-[85vw] max-w-[280px] shrink-0 border-r border-ink-700 bg-ink-900/80 backdrop-blur-md`}
         >
           <div className="flex h-full flex-col">
             <div className="hidden md:flex px-5 py-5">
@@ -163,7 +164,7 @@ export default function App() {
                 <div className="mt-3 flex items-center justify-between rounded-lg bg-ink-850 px-3 py-2">
                   <span className="text-xs text-slate-500">Balance</span>
                   <span className="text-sm font-semibold text-brand-400">
-                    {user.currency === 'GHS' ? '₵' : '₦'}{user.wallet_balance.toLocaleString()}
+                    ₵{user.wallet_balance.toLocaleString()}
                   </span>
                 </div>
               </button>
@@ -172,7 +173,7 @@ export default function App() {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 min-w-0 px-4 py-6 md:px-8 md:py-8">
+        <main className="flex-1 min-w-0 px-3 py-4 sm:px-5 md:px-8 md:py-8">
           <div className="mx-auto max-w-6xl animate-fade-in">
             <ActiveView />
           </div>

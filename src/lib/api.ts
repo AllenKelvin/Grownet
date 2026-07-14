@@ -55,7 +55,4 @@ export const api = {
 
   // dashboard
   dashboardStats: (userId) => request(`/dashboard/${userId}`),
-
-  // mock SMS
-  mockSmsBuy: (body) => request('/mock-sms/buy', { method: 'POST', body: JSON.stringify(body) }),
 }

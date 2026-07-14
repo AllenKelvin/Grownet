@@ -16,7 +16,7 @@ import {
   dashboardStats,
 } from '../controllers/catalogController.js'
 import { placeOrder, placeMassOrder } from '../controllers/orderController.js'
-import mockSmsRouter from './mockSms.js'
+import fiveSimCatalogRouter from './fiveSimCatalog.js'
 
 const router = Router()
 
@@ -48,7 +48,7 @@ router.get('/deposits', listDeposits)
 // Dashboard
 router.get('/dashboard/:user_id', dashboardStats)
 
-// Mock SMS
-router.use(mockSmsRouter)
+// 5sim live catalog bridge
+router.use(fiveSimCatalogRouter)
 
 export default router

@@ -4,24 +4,17 @@ import { api } from '../lib/api'
 import { formatMoney, CURRENCY_META } from '../lib/currency'
 import { PageHeader } from '../components/ui'
 
-const COUNTRIES = [
-  { code: 'NG', label: 'Nigeria', currency: 'NGN', flag: '🇳🇬' },
-  { code: 'GH', label: 'Ghana', currency: 'GHS', flag: '🇬🇭' },
-]
-
 export default function Profile({ user, onUpdated, onLogout }) {
   const [name, setName] = useState(user.name || '')
   const [email, setEmail] = useState(user.email || '')
-  const [currency, setCurrency] = useState(user.currency || 'NGN')
+  const [currency] = useState(user.currency || 'GHS')
   const [saving, setSaving] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState('')
 
-  const selectedCountry = COUNTRIES.find((c) => c.currency === currency) || COUNTRIES[0]
+  const selectedCountry = { code: 'GH', label: 'Ghana', currency: 'GHS', flag: '🇬🇭' }
   const balanceBefore = user.wallet_balance
-  const balanceAfter = currency !== user.currency
-    ? convertForDisplay(balanceBefore, user.currency, currency)
-    : balanceBefore
+  const balanceAfter = balanceBefore
 
   const handleSave = async (e) => {
     e.preventDefault()
@@ -107,45 +100,8 @@ export default function Profile({ user, onUpdated, onLogout }) {
               </div>
             </div>
 
-            {/* Country / currency selector */}
-            <div>
-              <label className="label">Country &amp; Currency</label>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {COUNTRIES.map((c) => {
-                  const active = currency === c.currency
-                  return (
-                    <button
-                      key={c.code}
-                      type="button"
-                      onClick={() => setCurrency(c.currency)}
-                      className={`flex items-center gap-3 rounded-xl border p-4 text-left transition-all ${
-                        active
-                          ? 'border-brand-500 bg-brand-500/10 shadow-glow'
-                          : 'border-ink-700 bg-ink-850 hover:border-ink-600'
-                      }`}
-                    >
-                      <span className="text-3xl leading-none">{c.flag}</span>
-                      <div className="min-w-0">
-                        <p className={`text-sm font-semibold ${active ? 'text-brand-400' : 'text-slate-200'}`}>
-                          {c.label}
-                        </p>
-                        <p className="mt-0.5 text-xs text-slate-500">
-                          {CURRENCY_META[c.currency].label} ({CURRENCY_META[c.currency].symbol})
-                        </p>
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-              {currency !== user.currency && (
-                <div className="mt-3 flex items-start gap-2 rounded-xl border border-accent-500/20 bg-accent-500/10 px-4 py-3 text-xs text-accent-500">
-                  <AlertTriangle size={14} className="mt-0.5 shrink-0" />
-                  <span>
-                    Switching currency converts your wallet balance at the current exchange rate.
-                    Your balance will become <span className="font-semibold">{formatMoney(balanceAfter, currency)}</span>.
-                  </span>
-                </div>
-              )}
+            <div className="rounded-2xl border border-brand-500/20 bg-brand-500/10 px-4 py-3 text-sm text-brand-200">
+              Pricing is fixed in Ghanaian cedis for this workspace, so your wallet and all order totals are displayed in GHS.
             </div>
 
             {error && (
@@ -201,12 +157,4 @@ function Row({ icon: Icon, label, value }) {
   )
 }
 
-function convertForDisplay(amount, from, to) {
-  if (from === to) return amount
-  const NGN = 1370
-  const GHS = 11.4
-  const fromRate = from === 'NGN' ? NGN : GHS
-  const toRate = to === 'NGN' ? NGN : GHS
-  const usd = Number(amount) / fromRate
-  return Math.round(usd * toRate * 100) / 100
-}
+

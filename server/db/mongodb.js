@@ -10,7 +10,7 @@ export async function connectDB() {
     await mongoose.connect(MONGODB_URI)
     console.log('[db] Connected to MongoDB')
   } catch (err) {
-    console.warn('[db] MongoDB unavailable, using fallback mock data:', err.message)
+    console.warn('[db] MongoDB unavailable:', err.message)
     try {
       await mongoose.disconnect()
     } catch {}

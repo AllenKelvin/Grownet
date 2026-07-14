@@ -7,7 +7,7 @@ export default function AuthPage({ mode, onModeChange, onAuthenticate, loggedOut
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [currency, setCurrency] = useState('NGN')
+  const [currency] = useState('GHS')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
@@ -126,16 +126,8 @@ export default function AuthPage({ mode, onModeChange, onAuthenticate, loggedOut
           )}
 
           {isSignup && (
-            <div className="mb-4">
-              <label className="label">Currency</label>
-              <select
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
-                className="input"
-              >
-                <option value="NGN">Nigeria (₦)</option>
-                <option value="GHS">Ghana (₵)</option>
-              </select>
+            <div className="mb-4 rounded-2xl border border-brand-500/20 bg-brand-500/10 px-4 py-3 text-sm text-brand-200">
+              All pricing is shown in Ghanaian cedis, so your wallet will be set up in GHS by default.
             </div>
           )}
 
