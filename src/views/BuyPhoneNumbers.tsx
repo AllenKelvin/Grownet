@@ -83,7 +83,8 @@ export default function BuyPhoneNumbers({ user }) {
     let cancelled = false
     ;(async () => {
       try {
-        const res = await fetch('/api/sms/countries')
+        const apiBase = import.meta.env.VITE_API_URL || '/api'
+        const res = await fetch(`${apiBase}/sms/countries`)
         const data = await res.json()
         if (!cancelled) {
           const nextCountries = data.countries || []
@@ -115,7 +116,8 @@ export default function BuyPhoneNumbers({ user }) {
     ;(async () => {
       try {
         setLoadingProducts(true)
-        const res = await fetch(`/api/sms/products/${encodeURIComponent(selectedCountry)}`)
+        const apiBase = import.meta.env.VITE_API_URL || '/api'
+        const res = await fetch(`${apiBase}/sms/products/${encodeURIComponent(selectedCountry)}`)
         const data = await res.json()
         if (!cancelled) {
           const nextProducts = data.products || []
@@ -163,7 +165,8 @@ export default function BuyPhoneNumbers({ user }) {
     setFeedback('')
 
     try {
-      const res = await fetch('/api/sms/buy-number', {
+      const apiBase = import.meta.env.VITE_API_URL || '/api'
+      const res = await fetch(`${apiBase}/sms/buy-number`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

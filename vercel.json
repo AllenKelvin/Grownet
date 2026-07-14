@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://YOUR_RENDER_APP.onrender.com/api/$1"
+      "destination": "https://grownet-backend.onrender.com/api/$1"
     }
   ]
 }
