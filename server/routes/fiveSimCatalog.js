@@ -21,6 +21,14 @@ function convertFiveSimPrice(price, currency = 'GHS') {
   return Number((usd * 11.4).toFixed(2))
 }
 
+function getFlagEmoji(code = '') {
+  const clean = String(code || '').trim().toUpperCase()
+  if (!clean || clean.length > 2) return '🌐'
+
+  const codePoints = Array.from(clean).map((char) => 127397 + char.charCodeAt(0))
+  return String.fromCodePoint(...codePoints)
+}
+
 function normalizeCountry(entry, fallbackKey = '') {
   if (!entry || typeof entry !== 'object') return null
 
@@ -33,13 +41,14 @@ function normalizeCountry(entry, fallbackKey = '') {
 
   const codeValue = rawCode && typeof rawCode === 'object' ? Object.keys(rawCode)[0] || fallbackKey : rawCode || fallbackKey
   const normalizedCode = String(codeValue || fallbackKey || name).toLowerCase()
+  const codeDisplay = String(codeValue || fallbackKey || name).toUpperCase()
 
   return {
     id: normalizedCode,
     value: normalizedCode,
     label: name,
-    code: String(codeValue || fallbackKey || name).toUpperCase(),
-    flag: rawFlag || '🌐',
+    code: codeDisplay,
+    flag: rawFlag || getFlagEmoji(codeDisplay) || '🌐',
   }
 }
 

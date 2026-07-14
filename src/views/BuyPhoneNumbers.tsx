@@ -46,6 +46,59 @@ function generatePhoneNumber(countryCode: string, appLabel: string) {
   return `${countryCode} ${appLabel.slice(0, 2).toUpperCase()}${suffix}`
 }
 
+function ProductLogo({ name, className = '' }) {
+  const [hasError, setHasError] = useState(false)
+
+  const logoState = useMemo(() => {
+    const normalized = String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '')
+    const domainMap: Record<string, string> = {
+      telegram: 'telegram.org',
+      whatsapp: 'whatsapp.com',
+      instagram: 'instagram.com',
+      google: 'google.com',
+      tiktok: 'tiktok.com',
+      discord: 'discord.com',
+      amazon: 'amazon.com',
+      apple: 'apple.com',
+      facebook: 'facebook.com',
+      paypal: 'paypal.com',
+      uber: 'uber.com',
+      netflix: 'netflix.com',
+      linkedin: 'linkedin.com',
+      github: 'github.com',
+      snapchat: 'snapchat.com',
+      microsoft: 'microsoft.com',
+      gmail: 'gmail.com',
+      yahoo: 'yahoo.com',
+      twitter: 'x.com',
+      x: 'x.com',
+    }
+
+    const domain = domainMap[normalized] || `${normalized || 'example'}.com`
+    return {
+      src: `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`,
+      fallback: String(name || '').trim().slice(0, 2).toUpperCase() || '•',
+    }
+  }, [name])
+
+  if (hasError) {
+    return (
+      <div className={`flex h-10 w-10 items-center justify-center rounded-2xl bg-ink-800 text-sm font-semibold text-slate-200 ${className}`}>
+        {logoState.fallback}
+      </div>
+    )
+  }
+
+  return (
+    <img
+      src={logoState.src}
+      alt={String(name || 'service logo')}
+      onError={() => setHasError(true)}
+      className={`h-10 w-10 rounded-2xl object-cover ${className}`}
+    />
+  )
+}
+
 export default function BuyPhoneNumbers({ user }) {
   const [countries, setCountries] = useState<any[]>([])
   const [products, setProducts] = useState<any[]>([])
@@ -54,6 +107,7 @@ export default function BuyPhoneNumbers({ user }) {
   const [countrySearch, setCountrySearch] = useState('')
   const [appSearch, setAppSearch] = useState('')
   const [showAllApps, setShowAllApps] = useState(false)
+  const [showAllCountries, setShowAllCountries] = useState(false)
   const [orders, setOrders] = useState<any[]>([])
   const [walletBalance, setWalletBalance] = useState(user?.wallet_balance || 0)
   const [now, setNow] = useState(Date.now())
@@ -143,9 +197,13 @@ export default function BuyPhoneNumbers({ user }) {
     return showAllApps ? filtered : filtered.slice(0, 5)
   }, [products, appSearch, showAllApps])
 
-  const visibleCountries = useMemo(() => {
+  const filteredCountries = useMemo(() => {
     return countries.filter((country) => country.label.toLowerCase().includes(countrySearch.toLowerCase()))
   }, [countries, countrySearch])
+
+  const visibleCountries = useMemo(() => {
+    return showAllCountries ? filteredCountries : filteredCountries.slice(0, 8)
+  }, [filteredCountries, showAllCountries])
 
   const selectedCountryMeta = countries.find((country) => country.value === selectedCountry) || countries[0] || null
   const selectedProductMeta = selectedProduct || null
@@ -256,8 +314,8 @@ export default function BuyPhoneNumbers({ user }) {
                       className={`flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left transition ${selected ? 'border-brand-500/40 bg-slate-800/70 shadow-[0_0_0_1px_rgba(14,165,233,0.15)]' : 'border-ink-700 bg-ink-850/70 hover:border-ink-600'}`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br ${accent} text-slate-100`}>
-                          <Icon size={16} />
+                        <div className={`flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br ${accent} p-0.5 text-slate-100`}>
+                          <ProductLogo name={app.name} className="h-full w-full rounded-[14px]" />
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
@@ -281,9 +339,17 @@ export default function BuyPhoneNumbers({ user }) {
           </div>
 
           <div className="card p-5">
-            <div className="mb-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Step 2</p>
-              <h2 className="mt-1 text-lg font-semibold text-white">Select country</h2>
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Step 2</p>
+                <h2 className="mt-1 text-lg font-semibold text-white">Select country</h2>
+              </div>
+              <button
+                onClick={() => setShowAllCountries((value) => !value)}
+                className="rounded-full border border-brand-500/20 bg-brand-500/10 px-3 py-1.5 text-xs font-medium text-brand-300"
+              >
+                {showAllCountries ? 'Show fewer' : `Show all ${filteredCountries.length}`}
+              </button>
             </div>
 
             <div className="relative mb-3">
