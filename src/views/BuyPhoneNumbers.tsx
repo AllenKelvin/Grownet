@@ -311,22 +311,22 @@ export default function BuyPhoneNumbers({ user }) {
                     <button
                       key={app.id || app.name}
                       onClick={() => setSelectedProduct(app)}
-                      className={`flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left transition ${selected ? 'border-brand-500/40 bg-slate-800/70 shadow-[0_0_0_1px_rgba(14,165,233,0.15)]' : 'border-ink-700 bg-ink-850/70 hover:border-ink-600'}`}
+                      className={`flex w-full flex-col gap-3 rounded-2xl border px-3 py-3 text-left transition sm:flex-row sm:items-center sm:justify-between ${selected ? 'border-brand-500/40 bg-slate-800/70 shadow-[0_0_0_1px_rgba(14,165,233,0.15)]' : 'border-ink-700 bg-ink-850/70 hover:border-ink-600'}`}
                     >
-                      <div className="flex items-center gap-3">
-                        <div className={`flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br ${accent} p-0.5 text-slate-100`}>
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${accent} p-0.5 text-slate-100`}>
                           <ProductLogo name={app.name} className="h-full w-full rounded-[14px]" />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <Star size={13} className="text-amber-400" fill="currentColor" />
-                            <p className="text-sm font-semibold text-white">{app.name}</p>
+                            <Star size={13} className="shrink-0 text-amber-400" fill="currentColor" />
+                            <p className="truncate text-sm font-semibold text-white">{app.name}</p>
                           </div>
                           <p className="mt-1 text-xs text-slate-500">from {formatMoney(app.price, currency)}</p>
                           <p className="text-xs font-medium text-emerald-400">{app.qty} in stock</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 self-start sm:self-auto">
                         <span className="rounded-full bg-ink-900 px-2.5 py-1 text-[11px] uppercase tracking-[0.2em] text-slate-500">
                           {app.category}
                         </span>
@@ -374,13 +374,13 @@ export default function BuyPhoneNumbers({ user }) {
                     <button
                       key={country.value}
                       onClick={() => setSelectedCountry(country.value)}
-                      className={`flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left transition ${selected ? 'border-brand-500/40 bg-slate-800/70' : 'border-ink-700 bg-ink-850/70 hover:border-ink-600'}`}
+                      className={`flex w-full items-center justify-between gap-3 rounded-2xl border px-3 py-3 text-left transition ${selected ? 'border-brand-500/40 bg-slate-800/70' : 'border-ink-700 bg-ink-850/70 hover:border-ink-600'}`}
                     >
-                      <div className="flex items-center gap-3">
-                        <span className="text-lg">{country.flag || '🌐'}</span>
-                        <span className="text-sm font-medium text-slate-200">{country.label}</span>
+                      <div className="flex min-w-0 items-center gap-3">
+                        <span className="shrink-0 text-lg">{country.flag || '🌐'}</span>
+                        <span className="truncate text-sm font-medium text-slate-200">{country.label}</span>
                       </div>
-                      <span className="text-xs text-slate-500">{country.code}</span>
+                      <span className="shrink-0 text-xs text-slate-500">{country.code}</span>
                     </button>
                   )
                 })}
@@ -403,16 +403,16 @@ export default function BuyPhoneNumbers({ user }) {
               <p className="mt-1 text-sm text-slate-500">Choose a country, pick an in-stock service, and place a real activation request instantly.</p>
             </div>
 
-            <div className="mt-4 flex flex-wrap items-center gap-3">
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
               <button
                 onClick={handleBuy}
                 disabled={buying || !selectedCountryMeta || !selectedProductMeta}
-                className="inline-flex items-center gap-2 rounded-2xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-ink-950 transition hover:bg-brand-400 disabled:cursor-not-allowed disabled:opacity-70"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-ink-950 transition hover:bg-brand-400 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
               >
                 {buying ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
                 Buy number now
               </button>
-              <div className="rounded-2xl border border-ink-700 bg-ink-850/70 px-3 py-2 text-sm text-slate-400">
+              <div className="rounded-2xl border border-ink-700 bg-ink-850/70 px-3 py-2 text-sm text-slate-400 sm:min-w-[140px]">
                 Price: {formatMoney(localizedPrice, currency)}
               </div>
             </div>
@@ -432,46 +432,77 @@ export default function BuyPhoneNumbers({ user }) {
           </div>
 
           <div className="overflow-hidden rounded-2xl border border-ink-700">
-            <table className="min-w-full divide-y divide-ink-700 text-sm">
-              <thead className="bg-ink-850 text-left text-xs uppercase tracking-[0.2em] text-slate-500">
-                <tr>
-                  <th className="px-3 py-3">Country</th>
-                  <th className="px-3 py-3">App</th>
-                  <th className="px-3 py-3">Phone</th>
-                  <th className="px-3 py-3">Timer</th>
-                  <th className="px-3 py-3">Code</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-ink-800 bg-ink-900/70">
-                {orders.map((order) => {
-                  const remaining = order.expiresAt - now
-                  return (
-                    <tr key={order.id} className="align-middle">
-                      <td className="px-3 py-3 text-slate-300">{order.country}</td>
-                      <td className="px-3 py-3 text-slate-300">{order.app}</td>
-                      <td className="px-3 py-3 text-slate-300">{order.phoneNumber}</td>
-                      <td className="px-3 py-3">
-                        <div className="flex items-center gap-2 text-amber-400">
-                          <TimerReset size={14} className="animate-pulse" />
-                          <span>{formatCountdown(remaining)}</span>
-                        </div>
-                      </td>
-                      <td className="px-3 py-3">
-                        <div className="space-y-1">
-                          <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-400">
-                            {order.code}
+            <div className="hidden md:block">
+              <table className="min-w-full divide-y divide-ink-700 text-sm">
+                <thead className="bg-ink-850 text-left text-xs uppercase tracking-[0.2em] text-slate-500">
+                  <tr>
+                    <th className="px-3 py-3">Country</th>
+                    <th className="px-3 py-3">App</th>
+                    <th className="px-3 py-3">Phone</th>
+                    <th className="px-3 py-3">Timer</th>
+                    <th className="px-3 py-3">Code</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-ink-800 bg-ink-900/70">
+                  {orders.map((order) => {
+                    const remaining = order.expiresAt - now
+                    return (
+                      <tr key={order.id} className="align-middle">
+                        <td className="px-3 py-3 text-slate-300">{order.country}</td>
+                        <td className="px-3 py-3 text-slate-300">{order.app}</td>
+                        <td className="px-3 py-3 text-slate-300">{order.phoneNumber}</td>
+                        <td className="px-3 py-3">
+                          <div className="flex items-center gap-2 text-amber-400">
+                            <TimerReset size={14} className="animate-pulse" />
+                            <span>{formatCountdown(remaining)}</span>
                           </div>
-                          <div className="flex items-center gap-2 text-xs text-slate-400">
-                            <Loader2 size={12} className="animate-spin text-amber-400" />
-                            <span>{order.status}</span>
+                        </td>
+                        <td className="px-3 py-3">
+                          <div className="space-y-1">
+                            <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-400">
+                              {order.code}
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-slate-400">
+                              <Loader2 size={12} className="animate-spin text-amber-400" />
+                              <span>{order.status}</span>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div className="space-y-2 bg-ink-900/70 p-2 md:hidden">
+              {orders.map((order) => {
+                const remaining = order.expiresAt - now
+                return (
+                  <div key={order.id} className="rounded-2xl border border-ink-700 bg-ink-850/80 p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-white">{order.app}</p>
+                        <p className="mt-1 text-xs text-slate-500">{order.country}</p>
+                      </div>
+                      <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-400">
+                        {order.code}
+                      </div>
+                    </div>
+                    <p className="mt-2 break-all text-sm text-slate-300">{order.phoneNumber}</p>
+                    <div className="mt-3 flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2 text-amber-400">
+                        <TimerReset size={14} className="animate-pulse" />
+                        <span>{formatCountdown(remaining)}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-slate-400">
+                        <Loader2 size={12} className="animate-spin text-amber-400" />
+                        <span>{order.status}</span>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           </div>
 
           <div className="mt-4 rounded-2xl border border-ink-700 bg-ink-850/70 p-4 text-sm text-slate-400">
