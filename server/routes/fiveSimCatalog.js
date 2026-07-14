@@ -21,21 +21,24 @@ function convertFiveSimPrice(price, currency = 'GHS') {
   return Number((usd * 11.4).toFixed(2))
 }
 
-function normalizeCountry(entry) {
+function normalizeCountry(entry, fallbackKey = '') {
   if (!entry || typeof entry !== 'object') return null
 
-  const rawName = entry.name || entry.country || entry.country_name || entry.title || entry.label || ''
+  const rawName = entry.text_en || entry.name || entry.country || entry.country_name || entry.title || entry.label || ''
   const rawCode = entry.code || entry.iso || entry.country_code || entry.id || entry.value || ''
   const rawFlag = entry.flag || entry.emoji || entry.icon || entry.country_flag || ''
 
-  const name = String(rawName || rawCode || 'Unknown').trim()
+  const name = String(rawName || fallbackKey || 'Unknown').trim()
   if (!name) return null
 
+  const codeValue = rawCode && typeof rawCode === 'object' ? Object.keys(rawCode)[0] || fallbackKey : rawCode || fallbackKey
+  const normalizedCode = String(codeValue || fallbackKey || name).toLowerCase()
+
   return {
-    id: String(rawCode || name).toLowerCase(),
-    value: String(rawCode || name).toLowerCase(),
+    id: normalizedCode,
+    value: normalizedCode,
     label: name,
-    code: String(rawCode || name).toUpperCase(),
+    code: String(codeValue || fallbackKey || name).toUpperCase(),
     flag: rawFlag || '🌐',
   }
 }
@@ -43,15 +46,15 @@ function normalizeCountry(entry) {
 function normalizeProducts(payload) {
   const items = []
 
-  const pushItem = (item) => {
+  const pushItem = (item, fallbackKey = '') => {
     if (!item || typeof item !== 'object') return
 
-    const name = String(item.name || item.product || item.service || item.title || item.label || '').trim()
+    const name = String(item.name || item.product || item.service || item.title || item.label || fallbackKey || '').trim()
     if (!name) return
 
-    const qty = toNumber(item.qty ?? item.stock ?? item.available ?? item.count ?? 0)
-    const price = toNumber(item.price ?? item.cost ?? item.rate ?? item.amount ?? 0)
-    const category = String(item.category || item.type || item.group || 'SMS').trim() || 'SMS'
+    const qty = toNumber(item.qty ?? item.Qty ?? item.stock ?? item.available ?? item.count ?? 0)
+    const price = toNumber(item.price ?? item.Price ?? item.cost ?? item.rate ?? item.amount ?? 0)
+    const category = String(item.category || item.Category || item.type || item.group || 'SMS').trim() || 'SMS'
 
     items.push({
       id: name.toLowerCase(),
@@ -63,26 +66,26 @@ function normalizeProducts(payload) {
   }
 
   if (Array.isArray(payload)) {
-    payload.forEach(pushItem)
+    payload.forEach((item) => pushItem(item))
     return items
   }
 
   if (payload && typeof payload === 'object') {
     if (Array.isArray(payload.products)) {
-      payload.products.forEach(pushItem)
+      payload.products.forEach((item) => pushItem(item))
       return items
     }
 
     if (Array.isArray(payload.data)) {
-      payload.data.forEach(pushItem)
+      payload.data.forEach((item) => pushItem(item))
       return items
     }
 
-    Object.values(payload).forEach((value) => {
+    Object.entries(payload).forEach(([key, value]) => {
       if (Array.isArray(value)) {
-        value.forEach(pushItem)
+        value.forEach((item) => pushItem(item, key))
       } else if (value && typeof value === 'object') {
-        pushItem(value)
+        pushItem(value, key)
       }
     })
   }
@@ -101,8 +104,8 @@ async function fetchFiveSim(path) {
 router.get('/sms/countries', async (req, res) => {
   try {
     const data = await fetchFiveSim('/guest/countries')
-    const countries = (Array.isArray(data) ? data : [])
-      .map(normalizeCountry)
+    const countries = Object.entries(data || {})
+      .map(([key, value]) => normalizeCountry(value, key))
       .filter(Boolean)
       .sort((a, b) => a.label.localeCompare(b.label))
 
