@@ -15,6 +15,10 @@ import {
 } from '../config/index.js'
 
 function getBaseUrl() {
+  // allow switching provider base by type (5sim or smmzio)
+  if (String(PROVIDER_API_TYPE || '').toLowerCase() === 'smmzio') {
+    return String(PROVIDER_API_URL || 'https://smmzio.com/api/v2').replace(/\/+$/, '')
+  }
   return String(PROVIDER_API_URL || 'https://5sim.net/v1').replace(/\/+$/, '')
 }
 
@@ -28,16 +32,31 @@ function getHeaders(extra = {}) {
 
 async function requestProvider(path, { method = 'GET', body, headers } = {}) {
   if (!USE_REAL_PROVIDER) return null
-
-  const url = `${getBaseUrl()}${path}`
+  const url = `${getBaseUrl()}${path || ''}`
   try {
-    const { data } = await axios.request({
+    const opts = {
       method,
       url,
       ...(body !== undefined ? { data: body } : {}),
       headers: getHeaders(headers),
       timeout: PROVIDER_TIMEOUT_MS,
-    })
+    }
+
+    // SMMZIO expects POST form-encoded requests to the /v2 endpoint
+    if (String(PROVIDER_API_TYPE || '').toLowerCase() === 'smmzio') {
+      opts.method = 'POST'
+      // if body is an object, convert to URLSearchParams
+      if (body && typeof body === 'object' && !(body instanceof URLSearchParams)) {
+        const params = new URLSearchParams()
+        for (const [k, v] of Object.entries(body)) {
+          if (v !== undefined && v !== null) params.append(k, String(v))
+        }
+        opts.data = params.toString()
+        opts.headers = { 'Content-Type': 'application/x-www-form-urlencoded', ...(opts.headers || {}) }
+      }
+    }
+
+    const { data } = await axios.request(opts)
     return data
   } catch (err) {
     const detail = err?.response?.data ? JSON.stringify(err.response.data) : err.message
@@ -104,15 +123,23 @@ function buildMockServices() {
  */
 export async function providerAddOrder({ service, link, quantity }) {
   if (USE_REAL_PROVIDER) {
-    const country = String(PROVIDER_COUNTRY || 'england').trim()
-    const operator = String(PROVIDER_OPERATOR || 'any').trim()
-    const product = String(service ?? 'amazon').trim()
-    const activationPath = `/user/buy/activation/${encodeURIComponent(country)}/${encodeURIComponent(operator)}/${encodeURIComponent(product)}`
+    // SMMZIO uses a single POST endpoint with action=add
+    if (String(PROVIDER_API_TYPE || '').toLowerCase() === 'smmzio') {
+      const payload = { key: PROVIDER_API_KEY, action: 'add', service, link, quantity }
+      const data = await requestProvider('', { method: 'POST', body: payload })
+      if (data && (data.order || data.id)) return { order: String(data.order || data.id) }
+      console.warn('[provider] smmzio add-order unexpected response; falling back to mock')
+    } else {
+      const country = String(PROVIDER_COUNTRY || 'england').trim()
+      const operator = String(PROVIDER_OPERATOR || 'any').trim()
+      const product = String(service ?? 'amazon').trim()
+      const activationPath = `/user/buy/activation/${encodeURIComponent(country)}/${encodeURIComponent(operator)}/${encodeURIComponent(product)}`
 
-    const data = await requestProvider(activationPath, { method: 'GET' })
-    const normalized = normalizeOrderId(data)
-    if (normalized) return { order: normalized }
-    console.warn('[provider] add-order response was not in an expected shape; using mock fallback')
+      const data = await requestProvider(activationPath, { method: 'GET' })
+      const normalized = normalizeOrderId(data)
+      if (normalized) return { order: normalized }
+      console.warn('[provider] add-order response was not in an expected shape; using mock fallback')
+    }
   }
 
   return { order: buildMockOrderId() }
@@ -124,10 +151,19 @@ export async function providerAddOrder({ service, link, quantity }) {
  */
 export async function providerCheckStatus(providerOrderId) {
   if (USE_REAL_PROVIDER) {
-    const data = await requestProvider(`/user/check/${encodeURIComponent(String(providerOrderId))}`, { method: 'GET' })
-    if (data) {
-      const normalized = normalizeStatus(data)
-      if (normalized && (normalized.status || normalized.remains !== undefined)) return normalized
+    if (String(PROVIDER_API_TYPE || '').toLowerCase() === 'smmzio') {
+      const payload = { key: PROVIDER_API_KEY, action: 'status', order: providerOrderId }
+      const data = await requestProvider('', { method: 'POST', body: payload })
+      if (data) {
+        const normalized = normalizeStatus(data)
+        if (normalized && (normalized.status || normalized.remains !== undefined)) return normalized
+      }
+    } else {
+      const data = await requestProvider(`/user/check/${encodeURIComponent(String(providerOrderId))}`, { method: 'GET' })
+      if (data) {
+        const normalized = normalizeStatus(data)
+        if (normalized && (normalized.status || normalized.remains !== undefined)) return normalized
+      }
     }
   }
 
@@ -150,40 +186,58 @@ export async function providerCheckStatus(providerOrderId) {
  */
 export async function providerFetchServices() {
   if (USE_REAL_PROVIDER) {
-    const data = await requestProvider('/guest/prices', { method: 'GET' })
-    const normalized = normalizeServices(data)
-    if (normalized.length) {
-      return normalized.map((item, index) => ({
-        service: item.service ?? item.id ?? item.code ?? index + 1,
-        name: item.name ?? item.service ?? item.code ?? 'Service',
-        category: item.category ?? 'SMS',
-        rate: item.rate ?? item.price ?? item.cost ?? 0,
-        min: item.min ?? item.min_quantity ?? 1,
-        max: item.max ?? item.max_quantity ?? 10000,
-        refill: item.refill ?? true,
-      }))
-    }
-
-    if (data && typeof data === 'object') {
-      const priceEntries = Object.entries(data)
-      if (priceEntries.length) {
-        return priceEntries.slice(0, 20).map(([serviceKey, value]) => {
-          const nested = value && typeof value === 'object' ? value : {}
-          const priceValue = nested.cost ?? nested.price ?? nested.rate ?? 0
-          return {
-            service: serviceKey,
-            name: serviceKey,
-            category: 'SMS',
-            rate: Number(priceValue) || 0,
-            min: 1,
-            max: 10000,
-            refill: true,
-          }
-        })
+    if (String(PROVIDER_API_TYPE || '').toLowerCase() === 'smmzio') {
+      const payload = { key: PROVIDER_API_KEY, action: 'services' }
+      const data = await requestProvider('', { method: 'POST', body: payload })
+      const normalized = normalizeServices(data)
+      if (normalized.length) {
+        return normalized.map((item, index) => ({
+          service: item.service ?? item.id ?? item.code ?? index + 1,
+          name: item.name ?? item.service ?? item.code ?? 'Service',
+          category: item.category ?? item.type ?? 'SMM',
+          rate: Number(item.rate ?? item.price ?? item.cost ?? 0) || 0,
+          min: Number(item.min ?? item.min_quantity ?? 1) || 1,
+          max: Number(item.max ?? item.max_quantity ?? 10000) || 10000,
+          refill: item.refill ?? true,
+        }))
       }
-    }
+      console.warn('[provider] smmzio services response was empty or not in expected shape; using mock catalog')
+    } else {
+      const data = await requestProvider('/guest/prices', { method: 'GET' })
+      const normalized = normalizeServices(data)
+      if (normalized.length) {
+        return normalized.map((item, index) => ({
+          service: item.service ?? item.id ?? item.code ?? index + 1,
+          name: item.name ?? item.service ?? item.code ?? 'Service',
+          category: item.category ?? 'SMS',
+          rate: item.rate ?? item.price ?? item.cost ?? 0,
+          min: item.min ?? item.min_quantity ?? 1,
+          max: item.max ?? item.max_quantity ?? 10000,
+          refill: item.refill ?? true,
+        }))
+      }
 
-    console.warn('[provider] services response was empty or not in expected shape; using mock catalog')
+      if (data && typeof data === 'object') {
+        const priceEntries = Object.entries(data)
+        if (priceEntries.length) {
+          return priceEntries.slice(0, 20).map(([serviceKey, value]) => {
+            const nested = value && typeof value === 'object' ? value : {}
+            const priceValue = nested.cost ?? nested.price ?? nested.rate ?? 0
+            return {
+              service: serviceKey,
+              name: serviceKey,
+              category: 'SMS',
+              rate: Number(priceValue) || 0,
+              min: 1,
+              max: 10000,
+              refill: true,
+            }
+          })
+        }
+      }
+
+      console.warn('[provider] services response was empty or not in expected shape; using mock catalog')
+    }
   }
 
   return buildMockServices()
