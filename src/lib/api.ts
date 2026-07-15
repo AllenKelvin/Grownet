@@ -55,4 +55,8 @@ export const api = {
 
   // dashboard
   dashboardStats: (userId) => request(`/dashboard/${userId}`),
+
+  // phone number pricing overrides
+  getPhoneNumberPriceOverrides: () => request('/sms/pricing-overrides'),
+  updatePhoneNumberPriceOverrides: (body) => request('/sms/pricing-overrides', { method: 'PUT', body: JSON.stringify(body) }),
 }

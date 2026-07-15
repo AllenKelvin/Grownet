@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
 import { PageHeader, Spinner, EmptyState, StatusBadge } from '../components/ui'
-import { RefreshCw, PlusSquare, Users, Package, FileText } from 'lucide-react'
+import { RefreshCw, PlusSquare, Users, Package, FileText, Phone, Trash2, Save } from 'lucide-react'
 
 export default function Admin({ user }: any) {
   const [tab, setTab] = useState('users')
@@ -10,6 +10,11 @@ export default function Admin({ user }: any) {
   const [users, setUsers] = useState<any[]>([])
   const [orders, setOrders] = useState<any[]>([])
   const [services, setServices] = useState<any[]>([])
+  const [pricingOverrides, setPricingOverrides] = useState<any[]>([])
+  const [pricingSaving, setPricingSaving] = useState(false)
+  const [pricingMessage, setPricingMessage] = useState('')
+  const [newPricingKey, setNewPricingKey] = useState('')
+  const [newPricingValue, setNewPricingValue] = useState('')
 
   // form state for create service
   const [form, setForm] = useState({ provider_service_id: '', category: '', name: '', wholesale_rate_usd: '', local_rate: '', min_quantity: 1, max_quantity: 1000, refill_policy: true })
@@ -18,6 +23,11 @@ export default function Admin({ user }: any) {
   useEffect(() => {
     fetchAll()
   }, [])
+
+  useEffect(() => {
+    if (tab !== 'pricing') return
+    loadPricingOverrides()
+  }, [tab])
 
   async function fetchAll() {
     setLoading(true)
@@ -72,6 +82,60 @@ export default function Admin({ user }: any) {
     }
   }
 
+  async function loadPricingOverrides() {
+    try {
+      const data = await api.getPhoneNumberPriceOverrides()
+      const entries = Object.entries(data.overrides || {})
+        .map(([key, value]) => ({ key, value: String(value) }))
+        .sort((a, b) => a.key.localeCompare(b.key))
+      setPricingOverrides(entries.length ? entries : [{ key: 'default', value: '5' }])
+      setPricingMessage('')
+    } catch (err) {
+      console.error(err)
+      setPricingMessage('Unable to load pricing overrides.')
+    }
+  }
+
+  function updatePricingEntry(index: number, field: 'key' | 'value', value: string) {
+    setPricingOverrides((prev) => prev.map((entry, i) => i === index ? { ...entry, [field]: value } : entry))
+  }
+
+  function removePricingEntry(index: number) {
+    setPricingOverrides((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  function addPricingEntry() {
+    const key = newPricingKey.trim()
+    const value = newPricingValue.trim()
+    if (!key || !value) return
+
+    setPricingOverrides((prev) => [...prev, { key, value }])
+    setNewPricingKey('')
+    setNewPricingValue('')
+  }
+
+  async function savePricingOverrides() {
+    setPricingSaving(true)
+    setPricingMessage('')
+
+    try {
+      const payload: Record<string, number> = {}
+      pricingOverrides.forEach((entry) => {
+        const key = String(entry.key || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '')
+        const value = Number(entry.value)
+        if (key && Number.isFinite(value)) payload[key] = Number(value.toFixed(2))
+      })
+
+      await api.updatePhoneNumberPriceOverrides({ overrides: payload })
+      setPricingMessage('Phone number prices updated successfully.')
+    } catch (err) {
+      console.error(err)
+      setPricingMessage('Unable to save pricing overrides.')
+    } finally {
+      setPricingSaving(false)
+    }
+  }
+
   return (
     <div>
       <PageHeader
@@ -86,10 +150,11 @@ export default function Admin({ user }: any) {
         )}
       />
 
-      <div className="mb-6 flex items-center gap-3">
+      <div className="mb-6 flex flex-wrap items-center gap-3">
         <Tab label="Users" id="users" icon={Users} active={tab === 'users'} onClick={() => setTab('users')} />
         <Tab label="Orders" id="orders" icon={FileText} active={tab === 'orders'} onClick={() => setTab('orders')} />
         <Tab label="Services" id="services" icon={Package} active={tab === 'services'} onClick={() => setTab('services')} />
+        <Tab label="Phone Pricing" id="pricing" icon={Phone} active={tab === 'pricing'} onClick={() => setTab('pricing')} />
         <Tab label="Create Service" id="create" icon={PlusSquare} active={tab === 'create'} onClick={() => setTab('create')} />
       </div>
 
@@ -192,6 +257,70 @@ export default function Admin({ user }: any) {
                   </table>
                 </div>
               )}
+            </section>
+          )}
+
+          {tab === 'pricing' && (
+            <section>
+              <div className="card p-5">
+                <div className="mb-3">
+                  <h3 className="text-lg font-semibold text-white">Phone number pricing overrides</h3>
+                  <p className="mt-1 text-sm text-slate-400">Set the prices your customers pay for phone-number activations. Entries like <span className="font-semibold text-brand-400">usa</span>, <span className="font-semibold text-brand-400">telegram</span>, or <span className="font-semibold text-brand-400">default</span> override the provider default.</p>
+                </div>
+
+                <div className="space-y-3">
+                  {pricingOverrides.map((entry, index) => (
+                    <div key={`${entry.key}-${index}`} className="flex flex-col gap-2 rounded-2xl border border-ink-700 bg-ink-850/70 p-3 sm:flex-row">
+                      <input
+                        value={entry.key}
+                        onChange={(e) => updatePricingEntry(index, 'key', e.target.value)}
+                        placeholder="default, usa, telegram..."
+                        className="input sm:max-w-[220px]"
+                      />
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={entry.value}
+                        onChange={(e) => updatePricingEntry(index, 'value', e.target.value)}
+                        placeholder="Price"
+                        className="input sm:max-w-[140px]"
+                      />
+                      <button type="button" onClick={() => removePricingEntry(index)} className="btn-ghost shrink-0">
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-4 flex flex-col gap-2 rounded-2xl border border-dashed border-ink-700 bg-ink-850/40 p-3 sm:flex-row">
+                  <input
+                    value={newPricingKey}
+                    onChange={(e) => setNewPricingKey(e.target.value)}
+                    placeholder="Add key (default, usa, telegram...)"
+                    className="input sm:max-w-[220px]"
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={newPricingValue}
+                    onChange={(e) => setNewPricingValue(e.target.value)}
+                    placeholder="Price"
+                    className="input sm:max-w-[140px]"
+                  />
+                  <button type="button" onClick={addPricingEntry} className="btn-ghost shrink-0">
+                    <PlusSquare size={15} />
+                  </button>
+                </div>
+
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <button type="button" onClick={savePricingOverrides} className="btn bg-brand-500 text-ink-950" disabled={pricingSaving}>
+                    {pricingSaving ? <><Save size={15} className="animate-pulse" /> Saving…</> : <><Save size={15} /> Save pricing</>}
+                  </button>
+                  {pricingMessage && <p className={`text-sm ${pricingMessage.includes('successfully') ? 'text-emerald-400' : 'text-amber-400'}`}>{pricingMessage}</p>}
+                </div>
+              </div>
             </section>
           )}
 

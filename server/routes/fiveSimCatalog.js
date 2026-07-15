@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import axios from 'axios'
 import { PROVIDER_API_URL } from '../config/index.js'
+import { getAllPhoneNumberPriceOverrides, getCustomPhoneNumberPrice, savePhoneNumberPriceOverrides } from '../config/phoneNumberPricing.js'
 
 const router = Router()
 const FIVE_SIM_BASE = String(process.env.FIVE_SIM_API_URL || PROVIDER_API_URL || 'https://5sim.net/v1').replace(/\/+$/, '')
@@ -115,6 +116,21 @@ async function fetchFiveSim(path) {
   return data
 }
 
+router.get('/sms/pricing-overrides', (_req, res) => {
+  res.json({ overrides: getAllPhoneNumberPriceOverrides() })
+})
+
+router.put('/sms/pricing-overrides', (req, res) => {
+  try {
+    const { overrides } = req.body || {}
+    const saved = savePhoneNumberPriceOverrides(overrides)
+    res.json({ ok: true, overrides: saved })
+  } catch (error) {
+    console.error('[5sim] pricing overrides failed', error.message)
+    res.status(500).json({ error: 'Unable to save phone-number pricing overrides.' })
+  }
+})
+
 router.get('/sms/countries', async (req, res) => {
   try {
     const data = await fetchFiveSim('/guest/countries')
@@ -136,10 +152,13 @@ router.get('/sms/products/:country', async (req, res) => {
     const data = await fetchFiveSim(`/guest/products/${encodeURIComponent(country)}/any`)
     const products = normalizeProducts(data)
       .filter((item) => item.qty > 0)
-      .map((item) => ({
-        ...item,
-        price: convertFiveSimPrice(item.price, 'GHS'),
-      }))
+      .map((item) => {
+        const basePrice = convertFiveSimPrice(item.price, 'GHS')
+        return {
+          ...item,
+          price: getCustomPhoneNumberPrice(item.name, country, basePrice),
+        }
+      })
       .sort((a, b) => a.name.localeCompare(b.name))
 
     res.json({ products })
@@ -153,7 +172,8 @@ router.post('/sms/buy-number', async (req, res) => {
   try {
     const { country, product, currency = 'GHS' } = req.body || {}
     const productName = product?.name || 'Unknown service'
-    const productPrice = convertFiveSimPrice(product?.price || 0, currency)
+    const basePrice = convertFiveSimPrice(product?.price || 0, currency)
+    const productPrice = getCustomPhoneNumberPrice(productName, country, basePrice)
 
     const order = {
       id: `SMS-${Date.now()}`,
