@@ -13,10 +13,18 @@
     min-height: 100%;
     overflow-x: hidden;
   }
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
   body {
     @apply bg-ink-950 text-slate-200 font-sans;
     min-height: 100dvh;
     -webkit-font-smoothing: antialiased;
+    touch-action: manipulation;
+  }
+  input, select, textarea {
+    font-size: 16px;
   }
   ::selection {
     @apply bg-brand-500/30 text-white;

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, Package, ShoppingCart, Layers, Wallet, History, Zap, Menu, X, UserCircle, FileText, Phone } from 'lucide-react'
+import { LayoutDashboard, Package, ShoppingCart, Layers, Wallet, History, Zap, Menu, X, UserCircle, FileText, Phone, Send } from 'lucide-react'
 import { api } from './lib/api'
 import AuthPage from './views/Auth'
 import Dashboard from './views/Dashboard'
@@ -24,6 +24,13 @@ const NAV = [
   { id: 'admin', label: 'Admin Console', icon: FileText },
 ]
 
+const MOBILE_HIDDEN_IDS = ['place-order', 'wallet', 'profile']
+const MOBILE_QUICK_ITEMS = [
+  { id: 'place-order', label: 'Cart', icon: ShoppingCart },
+  { id: 'wallet', label: 'Wallet', icon: Wallet },
+  { id: 'profile', label: 'Profile', icon: UserCircle },
+]
+
 export default function App() {
   const [active, setActive] = useState('dashboard')
   const [user, setUser] = useState(null)
@@ -32,6 +39,7 @@ export default function App() {
   const [loggedOut, setLoggedOut] = useState(false)
   const [authMode, setAuthMode] = useState('login')
   const [selectedService, setSelectedService] = useState<any>(null)
+  const [isMobileView, setIsMobileView] = useState(() => typeof window !== 'undefined' ? window.innerWidth < 768 : false)
 
   useEffect(() => {
     const saved = localStorage.getItem('grownet-user')
@@ -43,6 +51,13 @@ export default function App() {
       }
     }
     setLoading(false)
+  }, [])
+
+  useEffect(() => {
+    const onResize = () => setIsMobileView(window.innerWidth < 768)
+    onResize()
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
   }, [])
 
   const refreshUser = async () => {
@@ -103,15 +118,37 @@ export default function App() {
     }
   }
 
+  const visibleNavItems = NAV.filter((item) => !isMobileView || !MOBILE_HIDDEN_IDS.includes(item.id))
+
   return (
     <div className="min-h-screen overflow-x-hidden bg-ink-950 text-slate-200">
       {mobileOpen && <div className="fixed inset-0 z-10 bg-black/60 md:hidden" onClick={() => setMobileOpen(false)} />}
       {/* Mobile top bar */}
       <div className="md:hidden sticky top-0 z-30 flex items-center justify-between border-b border-ink-700 bg-ink-900/90 px-3 py-2.5 backdrop-blur">
         <Brand />
-        <button onClick={() => setMobileOpen((v) => !v)} className="btn-ghost p-2">
-          {mobileOpen ? <X size={18} /> : <Menu size={18} />}
-        </button>
+        <div className="flex items-center gap-1.5">
+          {isMobileView && (
+            <div className="flex items-center gap-1 rounded-full border border-ink-700/80 bg-ink-850/70 p-1">
+              {MOBILE_QUICK_ITEMS.map((item) => {
+                const Icon = item.icon
+                const isActive = active === item.id
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => { setActive(item.id); setMobileOpen(false) }}
+                    className={`rounded-full p-2 transition-colors ${isActive ? 'bg-brand-500/15 text-brand-400' : 'text-slate-400 hover:bg-ink-800 hover:text-slate-200'}`}
+                    aria-label={item.label}
+                  >
+                    <Icon size={16} />
+                  </button>
+                )
+              })}
+            </div>
+          )}
+          <button onClick={() => setMobileOpen((v) => !v)} className="btn-ghost p-2">
+            {mobileOpen ? <X size={18} /> : <Menu size={18} />}
+          </button>
+        </div>
       </div>
 
       <div className="flex">
@@ -126,7 +163,7 @@ export default function App() {
               <Brand />
             </div>
             <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
-              {NAV.map((item) => {
+              {visibleNavItems.map((item) => {
                 const Icon = item.icon
                 const isActive = active === item.id
                 return (
@@ -173,12 +210,22 @@ export default function App() {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 min-w-0 px-3 py-4 pb-8 sm:px-5 md:px-8 md:py-8">
-          <div className="mx-auto max-w-6xl animate-fade-in">
+        <main className="flex-1 min-w-0 px-3 py-3 pb-24 sm:px-5 md:px-8 md:py-8 md:pb-8">
+          <div className="mx-auto max-w-6xl animate-fade-in min-h-[calc(100dvh-5rem)] md:min-h-0">
             <ActiveView />
           </div>
         </main>
       </div>
+
+      <a
+        href="https://t.me/grownet09"
+        target="_blank"
+        rel="noreferrer"
+        aria-label="Join Grownet Telegram channel"
+        className="fixed bottom-4 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#0088cc] text-white shadow-[0_12px_35px_rgba(0,136,204,0.35)] transition-transform hover:scale-105"
+      >
+        <Send size={22} />
+      </a>
     </div>
   )
 }
