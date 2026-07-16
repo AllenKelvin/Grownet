@@ -150,7 +150,8 @@ export default function ServiceCatalog({ user, onOrder }: any) {
                       <td className="px-4 py-3 text-right">
                         <button
                           onClick={() => onOrder && onOrder(s)}
-                          className="btn-ghost px-3 py-1.5 text-xs"
+                          disabled={!onOrder}
+                          className={`btn-ghost px-3 py-1.5 text-xs ${!onOrder ? 'opacity-40 cursor-not-allowed' : ''}`}
                         >
                           <ShoppingCart size={13} />
                           Order

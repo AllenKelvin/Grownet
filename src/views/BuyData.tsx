@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Zap, ArrowRight, CheckCircle2, X, Loader2 } from 'lucide-react'
 import { api } from '../lib/api'
 import { formatMoney } from '../lib/currency'
-import { PageHeader, Spinner, EmptyState } from '../components/ui'
+import { PageHeader, Spinner, EmptyState, StatusBadge } from '../components/ui'
 
 const NETWORKS = [
   { id: 'mtn', name: 'MTN', color: 'from-yellow-400 to-amber-500', accent: 'amber', filter: (name: string) => name.toLowerCase().includes('mtn') },
@@ -29,9 +29,8 @@ export default function BuyData({ user }: any) {
   useEffect(() => {
     ;(async () => {
       try {
-        const all = await api.listServices()
-        const dataServices = all.filter((s: any) => String(s.category || '').toLowerCase().includes('data') || ['mtn', 'telecel', 'airteltigo', 'airtel', 'tigo'].some((token) => String(s.name || '').toLowerCase().includes(token)))
-        setServices(dataServices)
+        const all = await api.listDataPackages()
+        setServices(all)
       } catch (err) {
         console.error(err)
       } finally {
@@ -215,32 +214,36 @@ export default function BuyData({ user }: any) {
             {history.length === 0 ? (
               <EmptyState icon={Zap} title="No data orders yet" subtitle="Your completed and pending orders will appear here." />
             ) : (
-              <div className="space-y-3">
-                {history.map((order) => (
-                  <div key={order._id} className="rounded-3xl border border-ink-700 bg-ink-900 p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold text-white">{order.package_name}</p>
-                        <p className="mt-1 text-xs text-slate-500">{new Date(order.created_at).toLocaleString()}</p>
+              <div className="-mx-3 overflow-x-auto py-3">
+                <div className="flex gap-3 px-3">
+                  {history.map((order) => (
+                    <div key={order._id} className="min-w-[300px] shrink-0 rounded-3xl border border-ink-700 bg-ink-900 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-white">{order.package_name}</p>
+                          <p className="mt-1 text-xs text-slate-500">{new Date(order.created_at).toLocaleString()}</p>
+                        </div>
+                        <div className="ml-2">
+                          <StatusBadge status={order.order_status} />
+                        </div>
                       </div>
-                      <span className="text-xs uppercase tracking-[0.15em] text-slate-400">{STATUS_LABELS[order.order_status] || order.order_status}</span>
+                      <div className="mt-4 grid gap-3">
+                        <div className="rounded-2xl bg-ink-950 p-3 text-sm text-slate-300">
+                          <div className="text-xs text-slate-500">Recipient</div>
+                          <div className="mt-1 font-medium">{order.recipient_number}</div>
+                        </div>
+                        <div className="rounded-2xl bg-ink-950 p-3 text-sm text-slate-300">
+                          <div className="text-xs text-slate-500">Package</div>
+                          <div className="mt-1 font-medium">{order.package_gig}</div>
+                        </div>
+                        <div className="rounded-2xl bg-ink-950 p-3 text-sm text-slate-300">
+                          <div className="text-xs text-slate-500">Price</div>
+                          <div className="mt-1 font-medium">{formatMoney(order.price_local, order.currency_used)}</div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-2xl bg-ink-950 p-3 text-sm text-slate-300">
-                        <div className="text-xs text-slate-500">Recipient</div>
-                        <div className="mt-1 font-medium">{order.recipient_number}</div>
-                      </div>
-                      <div className="rounded-2xl bg-ink-950 p-3 text-sm text-slate-300">
-                        <div className="text-xs text-slate-500">Package</div>
-                        <div className="mt-1 font-medium">{order.package_gig}</div>
-                      </div>
-                      <div className="rounded-2xl bg-ink-950 p-3 text-sm text-slate-300 sm:col-span-2">
-                        <div className="text-xs text-slate-500">Price</div>
-                        <div className="mt-1 font-medium">{formatMoney(order.price_local, order.currency_used)}</div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
           </div>

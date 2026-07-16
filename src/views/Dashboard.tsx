@@ -134,7 +134,7 @@ export default function Dashboard({ user, onNavigate }) {
           </div>
           {stats.recent_orders.length === 0 ? (
             <div className="py-8 text-center text-sm text-slate-500">
-              No orders yet. <button onClick={() => onNavigate('place-order')} className="text-brand-400 hover:text-brand-300">Place your first order →</button>
+              No orders yet. <button onClick={() => onNavigate('catalog')} className="text-brand-400 hover:text-brand-300">Place your first order →</button>
             </div>
           ) : (
             <div className="space-y-2">

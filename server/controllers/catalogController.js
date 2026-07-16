@@ -123,7 +123,10 @@ export async function forgotPassword(req, res) {
 export async function listServices(req, res) {
   const { category, q } = req.query
   let services = await Service.find({})
-  if (category && category !== 'All') {
+  // By default exclude Data category from the main service catalog
+  if (!category || category === 'All') {
+    services = services.filter((s) => String(s.category || '').toLowerCase() !== 'data')
+  } else if (category && category !== 'All') {
     services = services.filter((s) => s.category === category)
   }
   if (q) {
@@ -140,8 +143,18 @@ export async function listServices(req, res) {
 
 export async function listCategories(req, res) {
   const services = await Service.find({})
-  const cats = [...new Set(services.map((s) => s.category))].sort()
+  // Exclude Data from default categories in the public catalog
+  const cats = [...new Set(services.map((s) => s.category))].filter((c) => String(c || '').toLowerCase() !== 'data').sort()
   return res.json(cats)
+}
+
+export async function listDataPackages(req, res) {
+  try {
+    const pkgs = await Service.find({ category: 'Data' }).sort({ local_service_id: 1 })
+    return res.json(pkgs)
+  } catch (err) {
+    return res.status(500).json({ error: err.message })
+  }
 }
 
 // Sync services from provider catalog + apply margin matrix

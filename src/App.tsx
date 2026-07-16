@@ -4,8 +4,6 @@ import { api } from './lib/api'
 import AuthPage from './views/Auth'
 import Dashboard from './views/Dashboard'
 import ServiceCatalog from './views/ServiceCatalog'
-import PlaceOrder from './views/PlaceOrder'
-import MassOrder from './views/MassOrder'
 import WalletDeposits from './views/WalletDeposits'
 import OrderHistory from './views/OrderHistory'
 import Profile from './views/Profile'
@@ -18,17 +16,14 @@ const NAV = [
   { id: 'buy-numbers', label: 'Buy Phone Numbers', icon: Phone },
   { id: 'buy-data', label: 'Buy Data', icon: Zap },
   { id: 'catalog', label: 'Service Catalog', icon: Package },
-  { id: 'place-order', label: 'Cart', icon: ShoppingCart },
-  { id: 'mass-order', label: 'Mass Order', icon: Layers },
   { id: 'wallet', label: 'Wallet Deposits', icon: Wallet },
   { id: 'history', label: 'Order History', icon: History },
   { id: 'profile', label: 'Profile', icon: UserCircle },
   { id: 'admin', label: 'Admin Console', icon: FileText },
 ]
 
-const MOBILE_HIDDEN_IDS = ['place-order', 'wallet', 'profile']
+const MOBILE_HIDDEN_IDS = ['wallet', 'profile']
 const MOBILE_QUICK_ITEMS = [
-  { id: 'place-order', label: 'Cart', icon: ShoppingCart },
   { id: 'wallet', label: 'Wallet', icon: Wallet },
   { id: 'profile', label: 'Profile', icon: UserCircle },
 ]
@@ -100,15 +95,7 @@ export default function App() {
       case 'dashboard': return <Dashboard user={user} onNavigate={setActive} />
       case 'buy-numbers': return <BuyPhoneNumbers user={user} />
       case 'buy-data': return <BuyData user={user} />
-      case 'catalog': return <ServiceCatalog user={user} onOrder={(service) => {
-        setSelectedService(service)
-        setActive('place-order')
-      }} />
-      case 'place-order': return <PlaceOrder user={user} selectedService={selectedService} onOrdered={async () => {
-        await refreshUser()
-        setSelectedService(null)
-      }} />
-      case 'mass-order': return <MassOrder user={user} onOrdered={refreshUser} />
+      case 'catalog': return <ServiceCatalog user={user} />
       case 'wallet': return <WalletDeposits user={user} onDeposited={refreshUser} />
       case 'history': return <OrderHistory user={user} />
       case 'profile': return <Profile user={user} onUpdated={refreshUser} onLogout={() => {

@@ -413,8 +413,8 @@ export default function BuyPhoneNumbers({ user }) {
               </div>
             </div>
             <div className="rounded-2xl border border-dashed border-ink-700 bg-ink-850/60 p-4 text-sm text-slate-400">
-              <p className="font-medium text-slate-300">Live catalog is now connected</p>
-              <p className="mt-1 text-sm text-slate-500">Choose a country, pick an in-stock service, and place a real activation request instantly.</p>
+              <p className="font-medium text-slate-300">Selected: <span className="text-slate-200">{selectedCountryMeta?.label || '—'}</span> · <span className="text-slate-200">{selectedProductMeta?.name || '—'}</span></p>
+              <p className="mt-1 text-sm text-slate-500">You have chosen the country and app above — we'll request a real activation for that selection when you click <strong>Buy number now</strong>.</p>
             </div>
 
             <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">

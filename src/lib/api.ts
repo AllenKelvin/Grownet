@@ -40,6 +40,10 @@ export const api = {
   syncServices: () => request('/services/sync', { method: 'POST' }),
   createService: (body) => request('/services', { method: 'POST', body: JSON.stringify(body) }),
   createDataPackage: (body) => request('/services/data-package', { method: 'POST', body: JSON.stringify(body) }),
+  listDataPackages: (params = {}) => {
+    const qs = new URLSearchParams(params).toString()
+    return request(`/datapackages${qs ? '?' + qs : ''}`)
+  },
 
   // orders
   placeOrder: (body) => request('/orders', { method: 'POST', body: JSON.stringify(body) }),
