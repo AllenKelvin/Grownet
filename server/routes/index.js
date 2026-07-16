@@ -10,6 +10,7 @@ import {
   listCategories,
   syncServices,
   createService,
+  createDataPackage,
   listOrders,
   createDeposit,
   listDeposits,
@@ -37,6 +38,7 @@ router.get('/services', listServices)
 router.get('/categories', listCategories)
 router.post('/services/sync', syncServices)
 router.post('/services', createService)
+router.post('/services/data-package', createDataPackage)
 
 // Orders
 router.post('/orders', placeOrder)

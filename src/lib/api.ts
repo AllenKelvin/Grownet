@@ -39,6 +39,7 @@ export const api = {
   listCategories: () => request('/categories'),
   syncServices: () => request('/services/sync', { method: 'POST' }),
   createService: (body) => request('/services', { method: 'POST', body: JSON.stringify(body) }),
+  createDataPackage: (body) => request('/services/data-package', { method: 'POST', body: JSON.stringify(body) }),
 
   // orders
   placeOrder: (body) => request('/orders', { method: 'POST', body: JSON.stringify(body) }),

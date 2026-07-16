@@ -221,6 +221,37 @@ export async function createService(req, res) {
   }
 }
 
+// Create a data package (admin) — simpler variant for data bundles
+export async function createDataPackage(req, res) {
+  try {
+    const { network, name, gig, description, local_rate } = req.body
+    if (!network || !name || !local_rate) {
+      return res.status(400).json({ error: 'network, name and local_rate are required' })
+    }
+
+    const existing = await Service.find({})
+    const nextLocalId = (existing.reduce((m, s) => Math.max(m, s.local_service_id), 0) || 0) + 1
+
+    const svc = await Service.create({
+      local_service_id: nextLocalId,
+      provider_service_id: 0,
+      category: 'Data',
+      name: `${network} - ${String(name)}`,
+      wholesale_rate_usd: 0,
+      local_rate: Number(local_rate),
+      gig: String(gig || ''),
+      description: String(description || ''),
+      min_quantity: 1,
+      max_quantity: 100000,
+      refill_policy: false,
+    })
+
+    return res.status(201).json(svc)
+  } catch (err) {
+    return res.status(500).json({ error: err.message })
+  }
+}
+
 // ---- Orders ----
 export async function listOrders(req, res) {
   const { user_id, status } = req.query

@@ -17,7 +17,7 @@ export default function Admin({ user }: any) {
   const [newPricingValue, setNewPricingValue] = useState('')
 
   // form state for create service
-  const [form, setForm] = useState({ provider_service_id: '', category: 'Data', name: '', gig: '', description: '', wholesale_rate_usd: '', local_rate: '', min_quantity: 1, max_quantity: 1000, refill_policy: true })
+  const [form, setForm] = useState({ provider_service_id: '', category: 'Data', network: '', name: '', gig: '', description: '', wholesale_rate_usd: '', local_rate: '', min_quantity: 1, max_quantity: 1000, refill_policy: true })
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -70,8 +70,20 @@ export default function Admin({ user }: any) {
     e.preventDefault()
     setSaving(true)
     try {
-      await api.createService(form)
-      setForm({ provider_service_id: '', category: 'Data', name: '', gig: '', description: '', wholesale_rate_usd: '', local_rate: '', min_quantity: 1, max_quantity: 1000, refill_policy: true })
+      if (tab === 'create-data') {
+        const payload = {
+          network: form.network,
+          name: form.name,
+          gig: form.gig,
+          description: form.description,
+          local_rate: form.local_rate,
+        }
+        await api.createDataPackage(payload)
+        setForm({ provider_service_id: '', category: 'Data', network: '', name: '', gig: '', description: '', wholesale_rate_usd: '', local_rate: '', min_quantity: 1, max_quantity: 1000, refill_policy: true })
+      } else {
+        await api.createService(form)
+        setForm({ provider_service_id: '', category: 'Data', network: '', name: '', gig: '', description: '', wholesale_rate_usd: '', local_rate: '', min_quantity: 1, max_quantity: 1000, refill_policy: true })
+      }
       const s = await api.listServices()
       setServices(s)
       setTab('services')
@@ -375,8 +387,8 @@ export default function Admin({ user }: any) {
             <section>
               <form onSubmit={handleCreateService} className="grid max-w-lg gap-3">
                 <label className="text-xs text-slate-400">Network</label>
-                <select value={form.category} onChange={(e) => setForm({ ...form, category: 'Data', name: `${e.target.value} - ${form.name}` })} className="input">
-                  <option value="Data">Select network…</option>
+                <select value={form.network} onChange={(e) => setForm({ ...form, network: e.target.value })} className="input">
+                  <option value="">Select network…</option>
                   <option value="MTN">MTN</option>
                   <option value="Telecel">Telecel</option>
                   <option value="AirtelTigo">AirtelTigo</option>
