@@ -248,6 +248,20 @@ export async function createDeposit(req, res) {
     }
     const user = await User.findById(user_id)
     if (!user) return res.status(404).json({ error: 'User not found' })
+    // For Paystack flows we return a payment initialization object and
+    // keep the deposit pending until Paystack webhook confirms payment.
+    if (String(method).toLowerCase() === 'paystack') {
+      // frontend should call /deposits/paystack-init instead; keep this as
+      // a fallback for direct requests.
+      const deposit = await Deposit.create({
+        user_id,
+        amount: Number(amount),
+        currency: user.currency,
+        method: 'paystack',
+        status: 'pending',
+      })
+      return res.status(201).json({ success: true, deposit })
+    }
 
     const deposit = await Deposit.create({
       user_id,
@@ -261,6 +275,52 @@ export async function createDeposit(req, res) {
     const refreshed = await User.findById(user_id)
     return res.status(201).json({ success: true, deposit, wallet_balance: refreshed.wallet_balance })
   } catch (err) {
+    return res.status(500).json({ error: err.message })
+  }
+}
+
+// Initialize a Paystack transaction and return authorization_url
+export async function initPaystackDeposit(req, res) {
+  try {
+    const { user_id, amount } = req.body
+    if (!user_id || !amount) return res.status(400).json({ error: 'user_id and amount are required' })
+    const user = await User.findById(user_id)
+    if (!user) return res.status(404).json({ error: 'User not found' })
+
+    const { PAYSTACK_SECRET } = await import('../config/index.js')
+    if (!PAYSTACK_SECRET) return res.status(500).json({ error: 'Paystack is not configured on the server' })
+
+    // create pending deposit
+    const deposit = await Deposit.create({
+      user_id,
+      amount: Number(amount),
+      currency: user.currency,
+      method: 'paystack',
+      status: 'pending',
+    })
+
+    // initialize Paystack transaction
+    const axios = (await import('axios')).default
+    const initializeUrl = 'https://api.paystack.co/transaction/initialize'
+    const payload = {
+      email: user.email,
+      amount: Math.round(Number(amount) * 100), // kobo/ cents
+      callback_url: '',
+      metadata: { deposit_id: deposit._id.toString(), user_id: user_id.toString() },
+    }
+
+    const resp = await axios.post(initializeUrl, payload, {
+      headers: { Authorization: `Bearer ${PAYSTACK_SECRET}`, 'Content-Type': 'application/json' },
+      timeout: 10000,
+    })
+
+    if (!resp.data || !resp.data.data) {
+      return res.status(500).json({ error: 'Paystack initialization failed' })
+    }
+
+    return res.json({ success: true, deposit, payment: resp.data.data })
+  } catch (err) {
+    console.error('[paystack-init] error', err)
     return res.status(500).json({ error: err.message })
   }
 }

@@ -150,13 +150,14 @@ export default function Admin({ user }: any) {
         )}
       />
 
-      <div className="mb-6 flex flex-wrap items-center gap-3">
-        <Tab label="Users" id="users" icon={Users} active={tab === 'users'} onClick={() => setTab('users')} />
-        <Tab label="Orders" id="orders" icon={FileText} active={tab === 'orders'} onClick={() => setTab('orders')} />
-        <Tab label="Services" id="services" icon={Package} active={tab === 'services'} onClick={() => setTab('services')} />
-        <Tab label="Phone Pricing" id="pricing" icon={Phone} active={tab === 'pricing'} onClick={() => setTab('pricing')} />
-        <Tab label="Create Service" id="create" icon={PlusSquare} active={tab === 'create'} onClick={() => setTab('create')} />
-      </div>
+          <div className="mb-6 flex flex-wrap items-center gap-3">
+            <Tab label="Users" id="users" icon={Users} active={tab === 'users'} onClick={() => setTab('users')} />
+            <Tab label="Orders" id="orders" icon={FileText} active={tab === 'orders'} onClick={() => setTab('orders')} />
+            <Tab label="Services" id="services" icon={Package} active={tab === 'services'} onClick={() => setTab('services')} />
+            <Tab label="Phone Pricing" id="pricing" icon={Phone} active={tab === 'pricing'} onClick={() => setTab('pricing')} />
+            <Tab label="Create Service" id="create" icon={PlusSquare} active={tab === 'create'} onClick={() => setTab('create')} />
+            <Tab label="Create Data Package" id="create-data" icon={Package} active={tab === 'create-data'} onClick={() => setTab('create-data')} />
+          </div>
 
       {loading ? (
         <Spinner label="Loading admin data…" />
@@ -365,6 +366,36 @@ export default function Admin({ user }: any) {
 
                 <div>
                   <button type="submit" className="btn" disabled={saving}>{saving ? 'Saving…' : 'Create service'}</button>
+                </div>
+              </form>
+            </section>
+          )}
+
+          {tab === 'create-data' && (
+            <section>
+              <form onSubmit={handleCreateService} className="grid max-w-lg gap-3">
+                <label className="text-xs text-slate-400">Network</label>
+                <select value={form.category} onChange={(e) => setForm({ ...form, category: 'Data', name: `${e.target.value} - ${form.name}` })} className="input">
+                  <option value="Data">Select network…</option>
+                  <option value="MTN">MTN</option>
+                  <option value="Telecel">Telecel</option>
+                  <option value="AirtelTigo">AirtelTigo</option>
+                </select>
+
+                <label className="text-xs text-slate-400">Package name</label>
+                <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="input" />
+
+                <label className="text-xs text-slate-400">Gig amount</label>
+                <input value={form.gig} onChange={(e) => setForm({ ...form, gig: e.target.value })} className="input" placeholder="e.g. 1.5 GB" />
+
+                <label className="text-xs text-slate-400">Description</label>
+                <input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="input" placeholder="e.g. valid for 7 days" />
+
+                <label className="text-xs text-slate-400">Price (local)</label>
+                <input value={form.local_rate} onChange={(e) => setForm({ ...form, local_rate: e.target.value })} className="input" />
+
+                <div>
+                  <button type="submit" className="btn" disabled={saving}>{saving ? 'Saving…' : 'Create data package'}</button>
                 </div>
               </form>
             </section>

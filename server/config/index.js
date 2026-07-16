@@ -49,6 +49,10 @@ export const SMMZIO_API_KEY = process.env.SMMZIO_API_KEY || envValues.SMMZIO_API
 export const PROVIDER_TIMEOUT_MS = Number(process.env.PROVIDER_TIMEOUT_MS || envValues.PROVIDER_TIMEOUT_MS || 10000)
 export const USE_REAL_PROVIDER = String(process.env.USE_REAL_PROVIDER || envValues.USE_REAL_PROVIDER || 'false').toLowerCase() === 'true'
 
+// Paystack configuration (set in .env or env vars)
+export const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET || envValues.PAYSTACK_SECRET || ''
+export const PAYSTACK_PUBLIC = process.env.PAYSTACK_PUBLIC || envValues.PAYSTACK_PUBLIC || ''
+
 export const CURRENCIES = {
   NGN: { code: 'NGN', symbol: '₦', rate: NGN_USD_RATE, label: 'Nigerian Naira' },
   GHS: { code: 'GHS', symbol: '₵', rate: GHS_USD_RATE, label: 'Ghanaian Cedi' },

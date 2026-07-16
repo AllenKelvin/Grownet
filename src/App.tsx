@@ -18,7 +18,7 @@ const NAV = [
   { id: 'buy-numbers', label: 'Buy Phone Numbers', icon: Phone },
   { id: 'buy-data', label: 'Buy Data', icon: Zap },
   { id: 'catalog', label: 'Service Catalog', icon: Package },
-  { id: 'place-order', label: 'Place Order', icon: ShoppingCart },
+  { id: 'place-order', label: 'Cart', icon: ShoppingCart },
   { id: 'mass-order', label: 'Mass Order', icon: Layers },
   { id: 'wallet', label: 'Wallet Deposits', icon: Wallet },
   { id: 'history', label: 'Order History', icon: History },
@@ -165,7 +165,7 @@ export default function App() {
             <div className="hidden md:flex px-5 py-5">
               <Brand />
             </div>
-            <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
+            <nav className="flex-1 space-y-1 px-3 md:py-4 py-16 overflow-y-auto">
               {visibleNavItems.map((item) => {
                 const Icon = item.icon
                 const isActive = active === item.id

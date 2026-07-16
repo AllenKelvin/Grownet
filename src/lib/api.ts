@@ -53,6 +53,9 @@ export const api = {
   },
   createDataOrder: (body) => request('/data-orders', { method: 'POST', body: JSON.stringify(body) }),
 
+  // Paystack deposit init
+  paystackInit: (body) => request('/deposits/paystack-init', { method: 'POST', body: JSON.stringify(body) }),
+
   // deposits
   createDeposit: (body) => request('/deposits', { method: 'POST', body: JSON.stringify(body) }),
   listDeposits: (params = {}) => {

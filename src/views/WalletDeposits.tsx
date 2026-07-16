@@ -4,15 +4,13 @@ import { api } from '../lib/api'
 import { formatMoney } from '../lib/currency'
 import { PageHeader, Spinner } from '../components/ui'
 
+// Only Paystack is supported as a gateway. We expose two UX options but both use Paystack.
 const METHODS = [
-  { id: 'card', label: 'Debit Card', desc: 'Visa / Verve / Mastercard via Paystack', icon: CreditCard },
-  { id: 'bank', label: 'Bank Transfer', desc: 'Direct transfer to your Paystack virtual account', icon: Building2 },
-  { id: 'mtn', label: 'MTN Mobile Money', desc: 'Fund with MTN MoMo (Ghana)', icon: Smartphone },
-  { id: 'telecel', label: 'Telecel Cash', desc: 'Fund with Telecel Cash (Ghana)', icon: Smartphone },
-  { id: 'airteltigo', label: 'AirtelTigo Money', desc: 'Fund with AirtelTigo Money (Ghana)', icon: Smartphone },
+  { id: 'card', label: 'Debit / Card (Paystack)', desc: 'Visa / Verve / Mastercard via Paystack', icon: CreditCard },
+  { id: 'bank', label: 'Bank Transfer (Paystack)', desc: 'Direct transfer to your Paystack virtual account', icon: Building2 },
 ]
 
-const QUICK_AMOUNTS = [5000, 10000, 25000, 50000]
+const QUICK_AMOUNTS = [50, 100, 200, 500]
 
 export default function WalletDeposits({ user, onDeposited }) {
   const [amount, setAmount] = useState('')
@@ -40,15 +38,16 @@ export default function WalletDeposits({ user, onDeposited }) {
 
     setSubmitting(true)
     try {
-      const res = await api.createDeposit({
-        user_id: user._id,
-        amount: amt,
-        method,
-      })
-      setResult(res)
+      // Use Paystack initialization flow
+      const res = await api.paystackInit({ user_id: user._id, amount: amt })
+      if (res && res.payment && res.payment.authorization_url) {
+        // open Paystack checkout in a new tab
+        window.open(res.payment.authorization_url, '_blank')
+        setResult({ info: 'Redirected to Paystack. Complete payment to fund your wallet.' })
+      } else {
+        setError('Unable to initialize Paystack payment.')
+      }
       setAmount('')
-      if (onDeposited) await onDeposited()
-      await loadHistory()
     } catch (err) {
       setError(err.message || 'Deposit failed')
     } finally {

@@ -14,6 +14,7 @@ import {
   createDeposit,
   listDeposits,
   dashboardStats,
+  initPaystackDeposit,
 } from '../controllers/catalogController.js'
 import { placeOrder, placeMassOrder } from '../controllers/orderController.js'
 import { listDataOrders, createDataOrder } from '../controllers/dataController.js'
@@ -44,6 +45,7 @@ router.get('/orders', listOrders)
 
 // Deposits
 router.post('/deposits', createDeposit)
+router.post('/deposits/paystack-init', initPaystackDeposit)
 router.get('/deposits', listDeposits)
 
 // Dashboard
