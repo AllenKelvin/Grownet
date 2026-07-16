@@ -119,8 +119,8 @@ export default function BuyData({ user }: any) {
         subtitle="Select a network, choose a package, and buy a data bundle with a real phone number."
       />
 
-      <div className="grid gap-4 xl:grid-cols-[1.3fr_0.7fr]">
-        <div className="space-y-4">
+        <div className="grid gap-4 xl:grid-cols-[1.3fr_0.7fr]">
+          <div className="space-y-4 min-w-0">
           <div className="card p-5">
             <div className="mb-5 flex items-center justify-between gap-3">
               <div>
@@ -199,7 +199,7 @@ export default function BuyData({ user }: any) {
           )}
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
           <div className="card p-5">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
@@ -209,34 +209,39 @@ export default function BuyData({ user }: any) {
               <button onClick={loadHistory} className="btn-ghost text-sm">Refresh</button>
             </div>
 
-            {history.length === 0 ? (
+              {history.length === 0 ? (
               <EmptyState icon={Zap} title="No data orders yet" subtitle="Your completed and pending orders will appear here." />
             ) : (
-              <div className="overflow-auto">
-                <table className="w-full table-auto">
-                  <thead>
-                    <tr className="text-left text-xs text-slate-500">
-                      <th className="px-3 py-2">Time/Date</th>
-                      <th className="px-3 py-2">Recipient</th>
-                      <th className="px-3 py-2">Package</th>
-                      <th className="px-3 py-2">Price</th>
-                      <th className="px-3 py-2">Name</th>
-                      <th className="px-3 py-2">Order Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {history.map((order) => (
-                      <tr key={order._id} className="border-t border-ink-700">
-                        <td className="px-3 py-3 text-sm text-slate-300">{new Date(order.created_at).toLocaleString()}</td>
-                        <td className="px-3 py-3 text-sm text-slate-300">{order.recipient_number}</td>
-                        <td className="px-3 py-3 text-sm text-slate-300">{order.package_gig}</td>
-                        <td className="px-3 py-3 text-sm text-slate-300">{formatMoney(order.price_local, order.currency_used)}</td>
-                        <td className="px-3 py-3 text-sm text-slate-300">{order.package_name}</td>
-                        <td className="px-3 py-3 text-sm text-slate-300"><StatusBadge status={order.order_status} /></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="-mx-3 overflow-x-auto py-3">
+                <div className="flex gap-3 px-3">
+                  {history.map((order) => (
+                    <div key={order._id} className="min-w-[260px] shrink-0 rounded-3xl border border-ink-700 bg-ink-900 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-white truncate">{order.package_name}</p>
+                          <p className="mt-1 text-xs text-slate-500 truncate">{new Date(order.created_at).toLocaleString()}</p>
+                        </div>
+                        <div className="ml-2">
+                          <StatusBadge status={order.order_status} />
+                        </div>
+                      </div>
+                      <div className="mt-4 grid gap-3">
+                        <div className="rounded-2xl bg-ink-950 p-3 text-sm text-slate-300 break-words">
+                          <div className="text-xs text-slate-500">Recipient</div>
+                          <div className="mt-1 font-medium">{order.recipient_number}</div>
+                        </div>
+                        <div className="rounded-2xl bg-ink-950 p-3 text-sm text-slate-300">
+                          <div className="text-xs text-slate-500">Package</div>
+                          <div className="mt-1 font-medium">{order.package_gig}</div>
+                        </div>
+                        <div className="rounded-2xl bg-ink-950 p-3 text-sm text-slate-300">
+                          <div className="text-xs text-slate-500">Price</div>
+                          <div className="mt-1 font-medium">{formatMoney(order.price_local, order.currency_used)}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
