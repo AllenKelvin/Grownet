@@ -109,44 +109,37 @@ function normalizeServices(data) {
   return []
 }
 
-function buildMockOrderId() {
-  return 'PRT-' + Math.floor(100000 + Math.random() * 900000)
-}
-
-function buildMockServices() {
-  return [
-    { service: 1, name: 'Google Voice', category: 'SMS', rate: 0.95, min: 1, max: 1000, refill: true },
-    { service: 2, name: 'Telegram', category: 'SMS', rate: 0.8, min: 1, max: 1000, refill: true },
-    { service: 3, name: 'WhatsApp', category: 'SMS', rate: 1.1, min: 1, max: 1000, refill: true },
-  ]
-}
+// Mock helpers removed for production — provider client no longer uses local mock ids or services.
 
 /**
  * Place an order with the upstream provider.
  * Returns: { order: <provider_order_id> }
  */
 export async function providerAddOrder({ service, link, quantity }) {
-  if (USE_REAL_PROVIDER) {
-    // SMMZIO uses a single POST endpoint with action=add
-    if (String(PROVIDER_API_TYPE || '').toLowerCase() === 'smmzio') {
-      const payload = { key: SMMZIO_API_KEY, action: 'add', service, link, quantity }
-      const data = await requestProvider('', { method: 'POST', body: payload })
-      if (data && (data.order || data.id)) return { order: String(data.order || data.id) }
-      console.warn('[provider] smmzio add-order unexpected response; falling back to mock')
-    } else {
-      const country = String(PROVIDER_COUNTRY || 'england').trim()
-      const operator = String(PROVIDER_OPERATOR || 'any').trim()
-      const product = String(service ?? 'amazon').trim()
-      const activationPath = `/user/buy/activation/${encodeURIComponent(country)}/${encodeURIComponent(operator)}/${encodeURIComponent(product)}`
-
-      const data = await requestProvider(activationPath, { method: 'GET' })
-      const normalized = normalizeOrderId(data)
-      if (normalized) return { order: normalized }
-      console.warn('[provider] add-order response was not in an expected shape; using mock fallback')
-    }
+  if (!USE_REAL_PROVIDER) {
+    throw new Error('USE_REAL_PROVIDER=false — provider calls are disabled in configuration')
   }
 
-  return { order: buildMockOrderId() }
+  // SMMZIO add order
+  if (String(PROVIDER_API_TYPE || '').toLowerCase() === 'smmzio') {
+    const payload = { key: SMMZIO_API_KEY, action: 'add', service, link, quantity }
+    const data = await requestProvider('', { method: 'POST', body: payload })
+    if (data && (data.order || data.id)) return { order: String(data.order || data.id) }
+    const detail = data ? JSON.stringify(data) : 'no response'
+    throw new Error(`[provider] smmzio add-order failed: ${detail}`)
+  }
+
+  // 5SIM add order
+  const country = String(PROVIDER_COUNTRY || 'england').trim()
+  const operator = String(PROVIDER_OPERATOR || 'any').trim()
+  const product = String(service ?? 'amazon').trim()
+  const activationPath = `/user/buy/activation/${encodeURIComponent(country)}/${encodeURIComponent(operator)}/${encodeURIComponent(product)}`
+
+  const data = await requestProvider(activationPath, { method: 'GET' })
+  const normalized = normalizeOrderId(data)
+  if (normalized) return { order: normalized }
+  const detail = data ? JSON.stringify(data) : 'no response'
+  throw new Error(`[provider] add-order failed: ${detail}`)
 }
 
 /**
@@ -154,42 +147,36 @@ export async function providerAddOrder({ service, link, quantity }) {
  * Returns: { status, start_count, remains, charge }
  */
 export async function providerCheckStatus(providerOrderId) {
-  if (USE_REAL_PROVIDER) {
-    if (String(PROVIDER_API_TYPE || '').toLowerCase() === 'smmzio') {
-      const payload = { key: SMMZIO_API_KEY, action: 'status', order: providerOrderId }
-      const data = await requestProvider('', { method: 'POST', body: payload })
-      if (data) {
-        const normalized = normalizeStatus(data)
-        if (normalized && (normalized.status || normalized.remains !== undefined)) return normalized
-      }
-    } else {
-      const data = await requestProvider(`/user/check/${encodeURIComponent(String(providerOrderId))}`, { method: 'GET' })
-      if (data) {
-        const normalized = normalizeStatus(data)
-        if (normalized && (normalized.status || normalized.remains !== undefined)) return normalized
-      }
-    }
+  if (!USE_REAL_PROVIDER) {
+    throw new Error('USE_REAL_PROVIDER=false — provider status checks are disabled')
   }
 
-  // Deterministic mock progression to keep cron behavior realistic.
-  const seed = parseInt(String(providerOrderId).replace(/\D/g, '').slice(-3) || '1', 10)
-  const phase = (seed % 5) + 1 // 1..5
-  const statuses = ['Pending', 'In Progress', 'In Progress', 'Completed', 'Partial']
-  const status = statuses[Math.min(phase, 4)]
-  const remains = status === 'Completed' ? 0 : status === 'Partial' ? Math.floor(seed / 2) : 100
-  return {
-    status,
-    start_count: 0,
-    remains,
-    charge: '0.0000',
+  if (String(PROVIDER_API_TYPE || '').toLowerCase() === 'smmzio') {
+    const payload = { key: SMMZIO_API_KEY, action: 'status', order: providerOrderId }
+    const data = await requestProvider('', { method: 'POST', body: payload })
+    if (data) {
+      const normalized = normalizeStatus(data)
+      if (normalized && (normalized.status || normalized.remains !== undefined)) return normalized
+    }
+    const detail = data ? JSON.stringify(data) : 'no response'
+    throw new Error(`[provider] smmzio status check failed: ${detail}`)
   }
+
+  const data = await requestProvider(`/user/check/${encodeURIComponent(String(providerOrderId))}`, { method: 'GET' })
+  if (data) {
+    const normalized = normalizeStatus(data)
+    if (normalized && (normalized.status || normalized.remains !== undefined)) return normalized
+  }
+  const detail = data ? JSON.stringify(data) : 'no response'
+  throw new Error(`[provider] 5sim status check failed: ${detail}`)
 }
 
 /**
  * Fetch the provider's service catalog (wholesale USD rates).
  */
 export async function providerFetchServices() {
-  if (USE_REAL_PROVIDER) {
+  if (!USE_REAL_PROVIDER) { throw new Error('USE_REAL_PROVIDER=false — fetching provider catalog is disabled') }
+    if (USE_REAL_PROVIDER) {
     if (String(PROVIDER_API_TYPE || '').toLowerCase() === 'smmzio') {
       const payload = { key: SMMZIO_API_KEY, action: 'services' }
       const data = await requestProvider('', { method: 'POST', body: payload })
@@ -205,7 +192,7 @@ export async function providerFetchServices() {
           refill: item.refill ?? true,
         }))
       }
-      console.warn('[provider] smmzio services response was empty or not in expected shape; using mock catalog')
+      console.warn('[provider] smmzio services response was empty or not in expected shape')
     } else {
       const data = await requestProvider('/guest/prices', { method: 'GET' })
       const normalized = normalizeServices(data)
@@ -240,16 +227,16 @@ export async function providerFetchServices() {
         }
       }
 
-      console.warn('[provider] services response was empty or not in expected shape; using mock catalog')
+      console.warn('[provider] services response was empty or not in expected shape')
     }
   }
 
-  return buildMockServices()
+  throw new Error('Provider catalog unavailable or returned unexpected shape')
 }
 
 export async function providerCheckConnection() {
   if (!USE_REAL_PROVIDER) {
-    return { ok: true, provider: 'mock', message: 'USE_REAL_PROVIDER=false' }
+    return { ok: false, provider: 'disabled', message: 'USE_REAL_PROVIDER=false' }
   }
 
   if (String(PROVIDER_API_TYPE || '').toLowerCase() === 'smmzio') {

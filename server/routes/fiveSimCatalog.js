@@ -171,53 +171,30 @@ router.get('/sms/products/:country', async (req, res) => {
 router.post('/sms/buy-number', async (req, res) => {
   try {
     const { country = 'any', product, currency = 'GHS' } = req.body || {}
-    // If configured to use the real provider, call 5SIM's buy activation endpoint
-    if (USE_REAL_PROVIDER) {
-      try {
-        const activationUrl = `${FIVE_SIM_BASE}/user/buy/activation/${encodeURIComponent(country)}/${encodeURIComponent(PROVIDER_OPERATOR || 'any')}/${encodeURIComponent(product || '')}`
-        const provResp = await axios.get(activationUrl, {
-          headers: { Accept: 'application/json', Authorization: `Bearer ${FIVE_SIM_API_KEY}` },
-          timeout: 15000,
-          validateStatus: () => true,
-        })
 
-        // Pass provider response through
-        if (provResp.status === 200) {
-          return res.json({ ok: true, order: provResp.data })
-        }
-
-        // Handle expected provider errors (e.g., insufficient balance)
-        if (provResp.status === 400 && provResp.data && String(JSON.stringify(provResp.data)).toLowerCase().includes('not enough')) {
-          return res.status(402).json({ error: 'Insufficient wallet balance at provider', detail: provResp.data })
-        }
-
-        return res.status(provResp.status || 502).json({ error: 'Provider buy failed', detail: provResp.data })
-      } catch (provErr) {
-        console.error('[5sim] provider buy error', provErr.message)
-        // fallthrough to mock fallback
-      }
+    if (!USE_REAL_PROVIDER) {
+      return res.status(503).json({ error: 'Provider integration disabled. Set USE_REAL_PROVIDER=true to enable real purchases.' })
     }
 
-    // Fallback mock behavior (local dev/demo)
-    const productName = product?.name || product || 'Unknown service'
-    const basePrice = convertFiveSimPrice(product?.price || 0, currency)
-    const productPrice = getCustomPhoneNumberPrice(productName, country, basePrice)
+    const activationUrl = `${FIVE_SIM_BASE}/user/buy/activation/${encodeURIComponent(country)}/${encodeURIComponent(PROVIDER_OPERATOR || 'any')}/${encodeURIComponent(product || '')}`
+    const provResp = await axios.get(activationUrl, {
+      headers: { Accept: 'application/json', Authorization: `Bearer ${FIVE_SIM_API_KEY}` },
+      timeout: 15000,
+      validateStatus: () => true,
+    })
 
-    const order = {
-      id: `SMS-${Date.now()}`,
-      country: country || 'Unknown country',
-      product: productName,
-      phoneNumber: `+${Math.floor(100000 + Math.random() * 900000)}`,
-      expiresAt: Date.now() + 15 * 60 * 1000,
-      status: 'Waiting for SMS OTP code...',
-      price: productPrice,
-      currency,
+    if (provResp.status === 200) {
+      return res.json({ ok: true, order: provResp.data })
     }
 
-    res.json({ ok: true, order })
+    if (provResp.status === 400 && provResp.data && String(JSON.stringify(provResp.data)).toLowerCase().includes('not enough')) {
+      return res.status(402).json({ error: 'Insufficient wallet balance at provider', detail: provResp.data })
+    }
+
+    return res.status(provResp.status || 502).json({ error: 'Provider buy failed', detail: provResp.data })
   } catch (error) {
     console.error('[5sim] buy-number failed', error.message)
-    res.status(502).json({ error: 'Unable to create the SMS activation request right now.' })
+    res.status(502).json({ error: 'Unable to create the SMS activation request right now.', detail: error.message })
   }
 })
 

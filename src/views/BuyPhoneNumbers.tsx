@@ -234,18 +234,26 @@ export default function BuyPhoneNumbers({ user }) {
         }),
       })
       const data = await res.json()
+
+      if (!res.ok || !data || !data.ok || !data.order) {
+        const message = data?.error || data?.detail || 'Provider returned an error.'
+        setFeedback(String(message))
+        return
+      }
+
       const nextOrder = {
-        id: data.order?.id || `sms-${Date.now()}`,
+        id: data.order.id || `sms-${Date.now()}`,
         country: selectedCountryMeta.label,
         app: selectedProductMeta.name,
-        phoneNumber: data.order?.phoneNumber || generatePhoneNumber(selectedCountryMeta.code || '+', selectedProductMeta.name),
-        expiresAt: data.order?.expiresAt || Date.now() + 15 * 60 * 1000,
-        code: data.order?.statusCode || 'PENDING',
-        status: data.order?.status || 'Waiting for SMS OTP code...',
+        phoneNumber: data.order.phoneNumber,
+        expiresAt: data.order.expiresAt || Date.now() + 15 * 60 * 1000,
+        code: data.order.statusCode || 'PENDING',
+        status: data.order.status || 'Waiting for SMS OTP code...',
+        price: data.order.price || localizedPrice,
       }
 
       setOrders((prev) => [nextOrder, ...prev].slice(0, 6))
-      setWalletBalance((prev) => Math.max(prev - (data.order?.price || localizedPrice), 0))
+      setWalletBalance((prev) => Math.max(prev - (nextOrder.price || 0), 0))
       setActiveModal(nextOrder)
     } catch (error) {
       console.error(error)
@@ -394,8 +402,14 @@ export default function BuyPhoneNumbers({ user }) {
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Step 3</p>
                 <h2 className="mt-1 text-lg font-semibold text-white">Select operator</h2>
               </div>
-              <div className="rounded-full bg-ink-800 px-3 py-1 text-xs text-slate-500">
-                {selectedCountryMeta?.label || 'Select a country'} • {selectedProductMeta?.name || 'Select a service'}
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center rounded-full bg-ink-800 px-2 py-1 text-xs text-slate-300">
+                  <span className="mr-2 text-sm">{selectedCountryMeta?.flag}</span>
+                  <span className="truncate">{selectedCountryMeta?.label || 'Select a country'}</span>
+                </span>
+                <span className="inline-flex -ml-2 items-center rounded-full bg-ink-900 px-2 py-1 text-xs text-slate-300 border border-ink-700">
+                  <span className="truncate">{selectedProductMeta?.name || 'Select a service'}</span>
+                </span>
               </div>
             </div>
             <div className="rounded-2xl border border-dashed border-ink-700 bg-ink-850/60 p-4 text-sm text-slate-400">
