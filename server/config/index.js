@@ -42,6 +42,10 @@ export const PROVIDER_API_TYPE = process.env.PROVIDER_API_TYPE || envValues.PROV
 export const PROVIDER_COUNTRY = process.env.PROVIDER_COUNTRY || envValues.PROVIDER_COUNTRY || '1'
 export const PROVIDER_OPERATOR = process.env.PROVIDER_OPERATOR || envValues.PROVIDER_OPERATOR || 'any'
 export const PROVIDER_REF = process.env.PROVIDER_REF || envValues.PROVIDER_REF || 'grownet'
+export const FIVE_SIM_API_URL = process.env.FIVE_SIM_API_URL || envValues.FIVE_SIM_API_URL || 'https://5sim.net/v1'
+export const FIVE_SIM_API_KEY = process.env.FIVE_SIM_API_KEY || envValues.FIVE_SIM_API_KEY || ''
+export const SMMZIO_API_URL = process.env.SMMZIO_API_URL || envValues.SMMZIO_API_URL || 'https://smmzio.com/api/v2'
+export const SMMZIO_API_KEY = process.env.SMMZIO_API_KEY || envValues.SMMZIO_API_KEY || ''
 export const PROVIDER_TIMEOUT_MS = Number(process.env.PROVIDER_TIMEOUT_MS || envValues.PROVIDER_TIMEOUT_MS || 10000)
 export const USE_REAL_PROVIDER = String(process.env.USE_REAL_PROVIDER || envValues.USE_REAL_PROVIDER || 'false').toLowerCase() === 'true'
 

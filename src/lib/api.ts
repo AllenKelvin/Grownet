@@ -2,6 +2,8 @@
 // and to the deployed Render backend in production.
 
 const BASE = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '')
+const PROVIDER_TYPE = String(import.meta.env.VITE_PROVIDER_API_TYPE || '5sim').toLowerCase()
+export const providerType = PROVIDER_TYPE
 
 async function request(path: string, options: any = {}) {
   const res = await fetch(`${BASE}${path}`, {

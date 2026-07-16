@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs'
 import { User, Service, Order, Deposit } from '../models/index.js'
 import { computeLocalRate, convertCurrency } from '../utils/exchange.js'
 import { providerFetchServices } from '../services/providerClient.js'
+import { PROVIDER_API_TYPE } from '../config/index.js'
 
 // ---- Users ----
 export async function getCurrentUser(req, res) {

@@ -10,22 +10,26 @@ import {
   PROVIDER_COUNTRY,
   PROVIDER_OPERATOR,
   PROVIDER_REF,
+  FIVE_SIM_API_URL,
+  FIVE_SIM_API_KEY,
+  SMMZIO_API_URL,
+  SMMZIO_API_KEY,
   PROVIDER_TIMEOUT_MS,
   USE_REAL_PROVIDER,
 } from '../config/index.js'
 
 function getBaseUrl() {
-  // allow switching provider base by type (5sim or smmzio)
   if (String(PROVIDER_API_TYPE || '').toLowerCase() === 'smmzio') {
-    return String(PROVIDER_API_URL || 'https://smmzio.com/api/v2').replace(/\/+$/, '')
+    return String(SMMZIO_API_URL || 'https://smmzio.com/api/v2').replace(/\/+$/, '')
   }
-  return String(PROVIDER_API_URL || 'https://5sim.net/v1').replace(/\/+$/, '')
+  return String(FIVE_SIM_API_URL || PROVIDER_API_URL || 'https://5sim.net/v1').replace(/\/+$/, '')
 }
 
 function getHeaders(extra = {}) {
   const headers = { 'Content-Type': 'application/json', Accept: 'application/json', ...extra }
-  if (PROVIDER_API_KEY) {
-    headers.Authorization = `Bearer ${PROVIDER_API_KEY}`
+  if (String(PROVIDER_API_TYPE || '').toLowerCase() !== 'smmzio') {
+    const apiKey = FIVE_SIM_API_KEY || PROVIDER_API_KEY
+    if (apiKey) headers.Authorization = `Bearer ${apiKey}`
   }
   return headers
 }
@@ -125,7 +129,7 @@ export async function providerAddOrder({ service, link, quantity }) {
   if (USE_REAL_PROVIDER) {
     // SMMZIO uses a single POST endpoint with action=add
     if (String(PROVIDER_API_TYPE || '').toLowerCase() === 'smmzio') {
-      const payload = { key: PROVIDER_API_KEY, action: 'add', service, link, quantity }
+      const payload = { key: SMMZIO_API_KEY, action: 'add', service, link, quantity }
       const data = await requestProvider('', { method: 'POST', body: payload })
       if (data && (data.order || data.id)) return { order: String(data.order || data.id) }
       console.warn('[provider] smmzio add-order unexpected response; falling back to mock')
@@ -152,7 +156,7 @@ export async function providerAddOrder({ service, link, quantity }) {
 export async function providerCheckStatus(providerOrderId) {
   if (USE_REAL_PROVIDER) {
     if (String(PROVIDER_API_TYPE || '').toLowerCase() === 'smmzio') {
-      const payload = { key: PROVIDER_API_KEY, action: 'status', order: providerOrderId }
+      const payload = { key: SMMZIO_API_KEY, action: 'status', order: providerOrderId }
       const data = await requestProvider('', { method: 'POST', body: payload })
       if (data) {
         const normalized = normalizeStatus(data)
@@ -187,7 +191,7 @@ export async function providerCheckStatus(providerOrderId) {
 export async function providerFetchServices() {
   if (USE_REAL_PROVIDER) {
     if (String(PROVIDER_API_TYPE || '').toLowerCase() === 'smmzio') {
-      const payload = { key: PROVIDER_API_KEY, action: 'services' }
+      const payload = { key: SMMZIO_API_KEY, action: 'services' }
       const data = await requestProvider('', { method: 'POST', body: payload })
       const normalized = normalizeServices(data)
       if (normalized.length) {
@@ -241,4 +245,22 @@ export async function providerFetchServices() {
   }
 
   return buildMockServices()
+}
+
+export async function providerCheckConnection() {
+  if (!USE_REAL_PROVIDER) {
+    return { ok: true, provider: 'mock', message: 'USE_REAL_PROVIDER=false' }
+  }
+
+  if (String(PROVIDER_API_TYPE || '').toLowerCase() === 'smmzio') {
+    const data = await requestProvider('', { method: 'POST', body: { key: SMMZIO_API_KEY, action: 'balance' } })
+    if (!data) return { ok: false, provider: 'smmzio', error: 'Unable to validate SMMZIO credentials' }
+    return { ok: true, provider: 'smmzio', data }
+  }
+
+  const profile = await requestProvider('/user/profile', { method: 'GET' })
+  if (!profile) {
+    return { ok: false, provider: '5sim', error: 'Unable to validate 5SIM credentials via /user/profile' }
+  }
+  return { ok: true, provider: '5sim', data: profile }
 }

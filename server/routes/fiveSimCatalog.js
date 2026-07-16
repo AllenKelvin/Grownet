@@ -1,10 +1,10 @@
 import { Router } from 'express'
 import axios from 'axios'
-import { PROVIDER_API_URL } from '../config/index.js'
+import { FIVE_SIM_API_URL } from '../config/index.js'
 import { getAllPhoneNumberPriceOverrides, getCustomPhoneNumberPrice, savePhoneNumberPriceOverrides } from '../config/phoneNumberPricing.js'
 
 const router = Router()
-const FIVE_SIM_BASE = String(process.env.FIVE_SIM_API_URL || PROVIDER_API_URL || 'https://5sim.net/v1').replace(/\/+$/, '')
+const FIVE_SIM_BASE = String(FIVE_SIM_API_URL || 'https://5sim.net/v1').replace(/\/+$/, '')
 
 function toNumber(value) {
   const parsed = Number(value)
