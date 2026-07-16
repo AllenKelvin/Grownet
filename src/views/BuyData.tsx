@@ -50,9 +50,7 @@ export default function BuyData({ user }: any) {
   }
 
   const networkPackages = useMemo(() => {
-    const network = NETWORKS.find((item) => item.id === selectedNetwork)
-    if (!network) return []
-    return services.filter((service) => network.filter(String(service.name || '')))
+    return services.filter((pkg) => String((pkg.network || '')).toLowerCase().includes(String(selectedNetwork).toLowerCase()))
   }, [services, selectedNetwork])
 
   const selectedNetworkMeta = NETWORKS.find((item) => item.id === selectedNetwork) || NETWORKS[0]
@@ -77,7 +75,7 @@ export default function BuyData({ user }: any) {
     try {
       const payload = {
         user_id: user._id,
-        local_service_id: selectedPackage.local_service_id,
+        data_package_id: selectedPackage._id,
         recipient_number: digits,
         currency: user.currency || 'GHS',
       }
@@ -96,9 +94,9 @@ export default function BuyData({ user }: any) {
   const renderPackage = (pkg: any) => {
     return (
       <button
-        key={pkg.local_service_id}
+        key={pkg._id}
         onClick={() => handleSelectPackage(pkg)}
-        className={`rounded-3xl border p-4 text-left transition hover:shadow-lg ${selectedPackage?.local_service_id === pkg.local_service_id ? 'border-brand-500/50 bg-brand-500/5' : 'border-ink-700 bg-ink-900'}`}
+        className={`rounded-3xl border p-4 text-left transition hover:shadow-lg ${selectedPackage?._id === pkg._id ? 'border-brand-500/50 bg-brand-500/5' : 'border-ink-700 bg-ink-900'}`}
       >
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -106,7 +104,7 @@ export default function BuyData({ user }: any) {
             <p className="mt-1 text-xs text-slate-500">{pkg.gig || 'Unknown GB'}</p>
           </div>
           <div className="rounded-2xl bg-ink-800 px-3 py-1 text-sm text-slate-300">
-            {formatMoney(pkg.local_rate || 0, user.currency || 'GHS')}
+            {formatMoney(pkg.local_price || 0, user.currency || 'GHS')}
           </div>
         </div>
         {pkg.description && <p className="mt-3 text-xs text-slate-400">{pkg.description}</p>}
@@ -214,36 +212,31 @@ export default function BuyData({ user }: any) {
             {history.length === 0 ? (
               <EmptyState icon={Zap} title="No data orders yet" subtitle="Your completed and pending orders will appear here." />
             ) : (
-              <div className="-mx-3 overflow-x-auto py-3">
-                <div className="flex gap-3 px-3">
-                  {history.map((order) => (
-                    <div key={order._id} className="min-w-[300px] shrink-0 rounded-3xl border border-ink-700 bg-ink-900 p-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-semibold text-white">{order.package_name}</p>
-                          <p className="mt-1 text-xs text-slate-500">{new Date(order.created_at).toLocaleString()}</p>
-                        </div>
-                        <div className="ml-2">
-                          <StatusBadge status={order.order_status} />
-                        </div>
-                      </div>
-                      <div className="mt-4 grid gap-3">
-                        <div className="rounded-2xl bg-ink-950 p-3 text-sm text-slate-300">
-                          <div className="text-xs text-slate-500">Recipient</div>
-                          <div className="mt-1 font-medium">{order.recipient_number}</div>
-                        </div>
-                        <div className="rounded-2xl bg-ink-950 p-3 text-sm text-slate-300">
-                          <div className="text-xs text-slate-500">Package</div>
-                          <div className="mt-1 font-medium">{order.package_gig}</div>
-                        </div>
-                        <div className="rounded-2xl bg-ink-950 p-3 text-sm text-slate-300">
-                          <div className="text-xs text-slate-500">Price</div>
-                          <div className="mt-1 font-medium">{formatMoney(order.price_local, order.currency_used)}</div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+              <div className="overflow-auto">
+                <table className="w-full table-auto">
+                  <thead>
+                    <tr className="text-left text-xs text-slate-500">
+                      <th className="px-3 py-2">Time/Date</th>
+                      <th className="px-3 py-2">Recipient</th>
+                      <th className="px-3 py-2">Package</th>
+                      <th className="px-3 py-2">Price</th>
+                      <th className="px-3 py-2">Name</th>
+                      <th className="px-3 py-2">Order Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {history.map((order) => (
+                      <tr key={order._id} className="border-t border-ink-700">
+                        <td className="px-3 py-3 text-sm text-slate-300">{new Date(order.created_at).toLocaleString()}</td>
+                        <td className="px-3 py-3 text-sm text-slate-300">{order.recipient_number}</td>
+                        <td className="px-3 py-3 text-sm text-slate-300">{order.package_gig}</td>
+                        <td className="px-3 py-3 text-sm text-slate-300">{formatMoney(order.price_local, order.currency_used)}</td>
+                        <td className="px-3 py-3 text-sm text-slate-300">{order.package_name}</td>
+                        <td className="px-3 py-3 text-sm text-slate-300"><StatusBadge status={order.order_status} /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>

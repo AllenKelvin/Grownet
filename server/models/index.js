@@ -51,7 +51,7 @@ const depositSchema = new mongoose.Schema({
 
 const dataOrderSchema = new mongoose.Schema({
   user_id: { type: mongoose.Schema.Types.Mixed, required: true },
-  local_service_id: { type: Number, required: true },
+  data_package_id: { type: mongoose.Schema.Types.ObjectId, required: true },
   recipient_number: { type: String, required: true },
   package_name: { type: String, required: true },
   package_gig: { type: String, default: '' },
@@ -68,3 +68,16 @@ export const Service = mongoose.model('Service', serviceSchema)
 export const Order = mongoose.model('Order', orderSchema)
 export const Deposit = mongoose.model('Deposit', depositSchema)
 export const DataOrder = mongoose.model('DataOrder', dataOrderSchema)
+
+const dataPackageSchema = new mongoose.Schema({
+  network: { type: String, required: true },
+  name: { type: String, required: true },
+  gig: { type: String, default: '' },
+  description: { type: String, default: '' },
+  local_price: { type: Number, required: true },
+  currency: { type: String, default: 'GHS' },
+  created_at: { type: Date, default: Date.now },
+  updated_at: { type: Date, default: Date.now },
+})
+
+export const DataPackage = mongoose.model('DataPackage', dataPackageSchema)

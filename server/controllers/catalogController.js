@@ -1,7 +1,7 @@
 // Controllers for users, services, deposits, and dashboard stats.
 
 import bcrypt from 'bcryptjs'
-import { User, Service, Order, Deposit } from '../models/index.js'
+import { User, Service, Order, Deposit, DataPackage } from '../models/index.js'
 import { computeLocalRate, convertCurrency } from '../utils/exchange.js'
 import { providerFetchServices } from '../services/providerClient.js'
 import { PROVIDER_API_TYPE } from '../config/index.js'
@@ -150,7 +150,7 @@ export async function listCategories(req, res) {
 
 export async function listDataPackages(req, res) {
   try {
-    const pkgs = await Service.find({ category: 'Data' }).sort({ local_service_id: 1 })
+    const pkgs = await DataPackage.find({}).sort({ created_at: -1 })
     return res.json(pkgs)
   } catch (err) {
     return res.status(500).json({ error: err.message })
@@ -237,29 +237,21 @@ export async function createService(req, res) {
 // Create a data package (admin) — simpler variant for data bundles
 export async function createDataPackage(req, res) {
   try {
-    const { network, name, gig, description, local_rate } = req.body
+    const { network, name, gig, description, local_rate, currency } = req.body
     if (!network || !name || !local_rate) {
       return res.status(400).json({ error: 'network, name and local_rate are required' })
     }
 
-    const existing = await Service.find({})
-    const nextLocalId = (existing.reduce((m, s) => Math.max(m, s.local_service_id), 0) || 0) + 1
-
-    const svc = await Service.create({
-      local_service_id: nextLocalId,
-      provider_service_id: 0,
-      category: 'Data',
-      name: `${network} - ${String(name)}`,
-      wholesale_rate_usd: 0,
-      local_rate: Number(local_rate),
+    const pkg = await DataPackage.create({
+      network: String(network),
+      name: String(name),
       gig: String(gig || ''),
       description: String(description || ''),
-      min_quantity: 1,
-      max_quantity: 100000,
-      refill_policy: false,
+      local_price: Number(local_rate),
+      currency: String(currency || 'GHS'),
     })
 
-    return res.status(201).json(svc)
+    return res.status(201).json(pkg)
   } catch (err) {
     return res.status(500).json({ error: err.message })
   }

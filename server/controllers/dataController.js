@@ -1,4 +1,4 @@
-import { Service, DataOrder, User } from '../models/index.js'
+import { Service, DataOrder, User, DataPackage } from '../models/index.js'
 
 export async function listDataOrders(req, res) {
   try {
@@ -16,9 +16,9 @@ export async function listDataOrders(req, res) {
 
 export async function createDataOrder(req, res) {
   try {
-    const { user_id, local_service_id, recipient_number, currency } = req.body
-    if (!user_id || !local_service_id || !recipient_number || !currency) {
-      return res.status(400).json({ error: 'user_id, local_service_id, recipient_number and currency are required' })
+    const { user_id, data_package_id, recipient_number, currency } = req.body
+    if (!user_id || !data_package_id || !recipient_number || !currency) {
+      return res.status(400).json({ error: 'user_id, data_package_id, recipient_number and currency are required' })
     }
 
     const normalizedNumber = String(recipient_number || '').replace(/\D/g, '')
@@ -29,17 +29,17 @@ export async function createDataOrder(req, res) {
     const user = await User.findById(user_id)
     if (!user) return res.status(404).json({ error: 'User not found' })
 
-    const service = await Service.findOne({ local_service_id: Number(local_service_id) })
-    if (!service) return res.status(404).json({ error: 'Data package not found' })
+    const pkg = await DataPackage.findById(String(data_package_id))
+    if (!pkg) return res.status(404).json({ error: 'Data package not found' })
 
     const order = await DataOrder.create({
       user_id,
-      local_service_id: service.local_service_id,
+      data_package_id: pkg._id,
       recipient_number: normalizedNumber,
-      package_name: service.name,
-      package_gig: service.gig || 'Unknown',
-      package_description: service.description || '',
-      price_local: Number(service.local_rate || 0),
+      package_name: pkg.name,
+      package_gig: pkg.gig || 'Unknown',
+      package_description: pkg.description || '',
+      price_local: Number(pkg.local_price || 0),
       currency_used: currency,
       order_status: 'pending',
     })
