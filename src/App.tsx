@@ -11,10 +11,12 @@ import OrderHistory from './views/OrderHistory'
 import Profile from './views/Profile'
 import Admin from './views/Admin'
 import BuyPhoneNumbers from './views/BuyPhoneNumbers'
+import BuyData from './views/BuyData'
 
 const NAV = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'buy-numbers', label: 'Buy Phone Numbers', icon: Phone },
+  { id: 'buy-data', label: 'Buy Data', icon: Zap },
   { id: 'catalog', label: 'Service Catalog', icon: Package },
   { id: 'place-order', label: 'Place Order', icon: ShoppingCart },
   { id: 'mass-order', label: 'Mass Order', icon: Layers },
@@ -97,6 +99,7 @@ export default function App() {
     switch (active) {
       case 'dashboard': return <Dashboard user={user} onNavigate={setActive} />
       case 'buy-numbers': return <BuyPhoneNumbers user={user} />
+      case 'buy-data': return <BuyData user={user} />
       case 'catalog': return <ServiceCatalog user={user} onOrder={(service) => {
         setSelectedService(service)
         setActive('place-order')

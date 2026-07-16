@@ -17,7 +17,7 @@ export default function Admin({ user }: any) {
   const [newPricingValue, setNewPricingValue] = useState('')
 
   // form state for create service
-  const [form, setForm] = useState({ provider_service_id: '', category: '', name: '', wholesale_rate_usd: '', local_rate: '', min_quantity: 1, max_quantity: 1000, refill_policy: true })
+  const [form, setForm] = useState({ provider_service_id: '', category: 'Data', name: '', gig: '', description: '', wholesale_rate_usd: '', local_rate: '', min_quantity: 1, max_quantity: 1000, refill_policy: true })
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -71,7 +71,7 @@ export default function Admin({ user }: any) {
     setSaving(true)
     try {
       await api.createService(form)
-      setForm({ provider_service_id: '', category: '', name: '', wholesale_rate_usd: '', local_rate: '', min_quantity: 1, max_quantity: 1000, refill_policy: true })
+      setForm({ provider_service_id: '', category: 'Data', name: '', gig: '', description: '', wholesale_rate_usd: '', local_rate: '', min_quantity: 1, max_quantity: 1000, refill_policy: true })
       const s = await api.listServices()
       setServices(s)
       setTab('services')
@@ -335,6 +335,12 @@ export default function Admin({ user }: any) {
 
                 <label className="text-xs text-slate-400">Name</label>
                 <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="input" />
+
+                <label className="text-xs text-slate-400">Gig amount</label>
+                <input value={form.gig} onChange={(e) => setForm({ ...form, gig: e.target.value })} className="input" placeholder="e.g. 1.5 GB" />
+
+                <label className="text-xs text-slate-400">Description</label>
+                <input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="input" placeholder="e.g. valid for 7 days" />
 
                 <label className="text-xs text-slate-400">Wholesale rate (USD)</label>
                 <input value={form.wholesale_rate_usd} onChange={(e) => setForm({ ...form, wholesale_rate_usd: e.target.value })} className="input" />

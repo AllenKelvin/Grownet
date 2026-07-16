@@ -47,6 +47,11 @@ export const api = {
     const qs = new URLSearchParams(params).toString()
     return request(`/orders${qs ? '?' + qs : ''}`)
   },
+  listDataOrders: (params = {}) => {
+    const qs = new URLSearchParams(params).toString()
+    return request(`/data-orders${qs ? '?' + qs : ''}`)
+  },
+  createDataOrder: (body) => request('/data-orders', { method: 'POST', body: JSON.stringify(body) }),
 
   // deposits
   createDeposit: (body) => request('/deposits', { method: 'POST', body: JSON.stringify(body) }),

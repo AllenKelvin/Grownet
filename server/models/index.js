@@ -19,6 +19,8 @@ const serviceSchema = new mongoose.Schema({
   name: { type: String, required: true },
   wholesale_rate_usd: { type: Number, required: true },
   local_rate: { type: Number, required: true }, // per 1000, in user's currency
+  gig: { type: String, default: '' },
+  description: { type: String, default: '' },
   min_quantity: { type: Number, required: true },
   max_quantity: { type: Number, required: true },
   refill_policy: { type: Boolean, default: true },
@@ -47,7 +49,22 @@ const depositSchema = new mongoose.Schema({
   created_at: { type: Date, default: Date.now },
 })
 
+const dataOrderSchema = new mongoose.Schema({
+  user_id: { type: mongoose.Schema.Types.Mixed, required: true },
+  local_service_id: { type: Number, required: true },
+  recipient_number: { type: String, required: true },
+  package_name: { type: String, required: true },
+  package_gig: { type: String, default: '' },
+  package_description: { type: String, default: '' },
+  price_local: { type: Number, required: true },
+  currency_used: { type: String, required: true },
+  order_status: { type: String, default: 'pending' },
+  created_at: { type: Date, default: Date.now },
+  updated_at: { type: Date, default: Date.now },
+})
+
 export const User = mongoose.model('User', userSchema)
 export const Service = mongoose.model('Service', serviceSchema)
 export const Order = mongoose.model('Order', orderSchema)
 export const Deposit = mongoose.model('Deposit', depositSchema)
+export const DataOrder = mongoose.model('DataOrder', dataOrderSchema)

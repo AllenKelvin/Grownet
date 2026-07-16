@@ -194,7 +194,7 @@ export async function syncServices(req, res) {
 // Create a single service (admin)
 export async function createService(req, res) {
   try {
-    const { provider_service_id, category, name, wholesale_rate_usd, local_rate, min_quantity, max_quantity, refill_policy } = req.body
+    const { provider_service_id, category, name, wholesale_rate_usd, local_rate, gig, description, min_quantity, max_quantity, refill_policy } = req.body
     if (!provider_service_id || !category || !name || !wholesale_rate_usd || !local_rate) {
       return res.status(400).json({ error: 'provider_service_id, category, name, wholesale_rate_usd, and local_rate are required' })
     }
@@ -208,6 +208,8 @@ export async function createService(req, res) {
       name: String(name),
       wholesale_rate_usd: Number(wholesale_rate_usd),
       local_rate: Number(local_rate),
+      gig: String(gig || ''),
+      description: String(description || ''),
       min_quantity: Number(min_quantity) || 1,
       max_quantity: Number(max_quantity) || 10000,
       refill_policy: !!refill_policy,

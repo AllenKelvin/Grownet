@@ -16,6 +16,7 @@ import {
   dashboardStats,
 } from '../controllers/catalogController.js'
 import { placeOrder, placeMassOrder } from '../controllers/orderController.js'
+import { listDataOrders, createDataOrder } from '../controllers/dataController.js'
 import fiveSimCatalogRouter from './fiveSimCatalog.js'
 
 const router = Router()
@@ -47,6 +48,10 @@ router.get('/deposits', listDeposits)
 
 // Dashboard
 router.get('/dashboard/:user_id', dashboardStats)
+
+// Data orders
+router.get('/data-orders', listDataOrders)
+router.post('/data-orders', createDataOrder)
 
 // 5sim live catalog bridge
 router.use(fiveSimCatalogRouter)
