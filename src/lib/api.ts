@@ -57,6 +57,8 @@ export const api = {
     return request(`/data-orders${qs ? '?' + qs : ''}`)
   },
   createDataOrder: (body) => request('/data-orders', { method: 'POST', body: JSON.stringify(body) }),
+  listAllenDataHubProducts: () => request('/allendatahub/products'),
+  createAllenDataHubOrder: (body) => request('/data-orders/allendatahub', { method: 'POST', body: JSON.stringify(body) }),
 
   // Paystack deposit init
   paystackInit: (body) => request('/deposits/paystack-init', { method: 'POST', body: JSON.stringify(body) }),

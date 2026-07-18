@@ -1,19 +1,31 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Zap, ArrowRight, CheckCircle2, X, Loader2 } from 'lucide-react'
+import { Zap, ArrowRight, Loader2 } from 'lucide-react'
 import { api } from '../lib/api'
 import { formatMoney } from '../lib/currency'
 import { PageHeader, Spinner, EmptyState, StatusBadge } from '../components/ui'
 
 const NETWORKS = [
-  { id: 'mtn', name: 'MTN', color: 'from-yellow-400 to-amber-500', accent: 'amber', filter: (name: string) => name.toLowerCase().includes('mtn') },
-  { id: 'telecel', name: 'Telecel', color: 'from-rose-500 to-red-500', accent: 'rose', filter: (name: string) => name.toLowerCase().includes('telecel') },
-  { id: 'airteltigo', name: 'AirtelTigo', color: 'from-sky-500 to-blue-500', accent: 'sky', filter: (name: string) => name.toLowerCase().includes('airteltigo') || name.toLowerCase().includes('airtel') || name.toLowerCase().includes('tigo') },
+  { id: 'mtn', name: 'MTN', color: 'from-yellow-400 to-amber-500', accent: 'amber' },
+  { id: 'telecel', name: 'Telecel', color: 'from-rose-500 to-red-500', accent: 'rose' },
+  { id: 'airteltigo', name: 'AirtelTigo', color: 'from-sky-500 to-blue-500', accent: 'sky' },
 ]
 
-const STATUS_LABELS: Record<string, string> = {
-  pending: 'Pending',
-  processing: 'Processing',
-  delivered: 'Delivered',
+const PACKAGE_OPTIONS: Record<string, Array<{ value: number; label: string }>> = {
+  mtn: [
+    { value: 1, label: '1GB' },
+    { value: 2, label: '2GB' },
+    { value: 5, label: '5GB' },
+  ],
+  telecel: [
+    { value: 1, label: '1GB' },
+    { value: 2, label: '2GB' },
+    { value: 5, label: '5GB' },
+  ],
+  airteltigo: [
+    { value: 1, label: '1GB' },
+    { value: 2, label: '2GB' },
+    { value: 5, label: '5GB' },
+  ],
 }
 
 export default function BuyData({ user }: any) {
@@ -25,14 +37,21 @@ export default function BuyData({ user }: any) {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [feedback, setFeedback] = useState('')
+  const [selectedVolume, setSelectedVolume] = useState<number>(1)
 
   useEffect(() => {
     ;(async () => {
       try {
-        const all = await api.listDataPackages()
+        const all = await api.listAllenDataHubProducts()
         setServices(all)
       } catch (err) {
         console.error(err)
+        try {
+          const fallback = await api.listDataPackages()
+          setServices(fallback)
+        } catch (fallbackErr) {
+          console.error(fallbackErr)
+        }
       } finally {
         setLoading(false)
       }
@@ -54,11 +73,13 @@ export default function BuyData({ user }: any) {
   }, [services, selectedNetwork])
 
   const selectedNetworkMeta = NETWORKS.find((item) => item.id === selectedNetwork) || NETWORKS[0]
+  const volumeOptions = PACKAGE_OPTIONS[selectedNetwork] || PACKAGE_OPTIONS.mtn
 
   const handleSelectPackage = (pkg: any) => {
     setSelectedPackage(pkg)
     setPhoneNumber('')
     setFeedback('')
+    setSelectedVolume(1)
   }
 
   const handleBuy = async (e: any) => {
@@ -75,11 +96,12 @@ export default function BuyData({ user }: any) {
     try {
       const payload = {
         user_id: user._id,
-        data_package_id: selectedPackage._id,
-        recipient_number: digits,
+        network: selectedNetworkMeta.name,
+        volume: selectedVolume,
+        phoneNumber: digits,
         currency: user.currency || 'GHS',
       }
-      const data = await api.createDataOrder(payload)
+      const data = await api.createAllenDataHubOrder(payload)
       setHistory((prev) => [data.order, ...prev])
       setSelectedPackage(null)
       setPhoneNumber('')
@@ -176,6 +198,21 @@ export default function BuyData({ user }: any) {
                 <span className="rounded-full bg-ink-800 px-3 py-1 text-xs text-slate-400">{selectedPackage.gig || 'Data package'}</span>
               </div>
               <form onSubmit={handleBuy} className="space-y-4">
+                <div>
+                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Data bundle</label>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {volumeOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => setSelectedVolume(option.value)}
+                        className={`rounded-2xl border px-3 py-2 text-sm ${selectedVolume === option.value ? 'border-brand-500 bg-brand-500/10 text-brand-400' : 'border-ink-700 bg-ink-900 text-slate-300'}`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Phone number</label>
                   <input

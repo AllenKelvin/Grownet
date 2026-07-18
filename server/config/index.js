@@ -46,6 +46,8 @@ export const FIVE_SIM_API_URL = process.env.FIVE_SIM_API_URL || envValues.FIVE_S
 export const FIVE_SIM_API_KEY = process.env.FIVE_SIM_API_KEY || envValues.FIVE_SIM_API_KEY || ''
 export const SMMZIO_API_URL = process.env.SMMZIO_API_URL || envValues.SMMZIO_API_URL || 'https://smmzio.com/api/v2'
 export const SMMZIO_API_KEY = process.env.SMMZIO_API_KEY || envValues.SMMZIO_API_KEY || ''
+export const ALLENDATAHUB_BASE_URL = process.env.ALLENDATAHUB_BASE_URL || envValues.ALLENDATAHUB_BASE_URL || 'https://allen-data-hub-backend.onrender.com'
+export const ALLENDATAHUB_API_KEY = process.env.ALLENDATAHUB_API_KEY || envValues.ALLENDATAHUB_API_KEY || 'adh_live_K241vk5gGmyEiyWoInuJJW5LdItLRaHSIYdEdra05N8'
 export const PROVIDER_TIMEOUT_MS = Number(process.env.PROVIDER_TIMEOUT_MS || envValues.PROVIDER_TIMEOUT_MS || 10000)
 export const USE_REAL_PROVIDER = String(process.env.USE_REAL_PROVIDER || envValues.USE_REAL_PROVIDER || 'false').toLowerCase() === 'true'
 

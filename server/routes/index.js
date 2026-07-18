@@ -19,7 +19,7 @@ import {
   initPaystackDeposit,
 } from '../controllers/catalogController.js'
 import { placeOrder, placeMassOrder } from '../controllers/orderController.js'
-import { listDataOrders, createDataOrder } from '../controllers/dataController.js'
+import { listDataOrders, createDataOrder, createAllenDataHubPurchase, listAllenDataHubProducts } from '../controllers/dataController.js'
 import fiveSimCatalogRouter from './fiveSimCatalog.js'
 
 const router = Router()
@@ -59,6 +59,8 @@ router.get('/dashboard/:user_id', dashboardStats)
 // Data orders
 router.get('/data-orders', listDataOrders)
 router.post('/data-orders', createDataOrder)
+router.get('/allendatahub/products', listAllenDataHubProducts)
+router.post('/data-orders/allendatahub', createAllenDataHubPurchase)
 
 // 5sim live catalog bridge
 router.use(fiveSimCatalogRouter)

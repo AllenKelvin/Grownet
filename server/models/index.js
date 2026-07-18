@@ -51,7 +51,7 @@ const depositSchema = new mongoose.Schema({
 
 const dataOrderSchema = new mongoose.Schema({
   user_id: { type: mongoose.Schema.Types.Mixed, required: true },
-  data_package_id: { type: mongoose.Schema.Types.ObjectId, required: true },
+  data_package_id: { type: mongoose.Schema.Types.ObjectId, default: null },
   recipient_number: { type: String, required: true },
   package_name: { type: String, required: true },
   package_gig: { type: String, default: '' },

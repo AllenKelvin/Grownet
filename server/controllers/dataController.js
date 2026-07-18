@@ -1,4 +1,5 @@
 import { Service, DataOrder, User, DataPackage } from '../models/index.js'
+import { fetchAllenDataHubProducts, purchaseAllenDataHubOrder } from '../utils/allendatahub.js'
 
 export async function listDataOrders(req, res) {
   try {
@@ -48,5 +49,45 @@ export async function createDataOrder(req, res) {
   } catch (err) {
     console.error('[dataOrders] create failed', err)
     return res.status(500).json({ error: err.message })
+  }
+}
+
+export async function listAllenDataHubProducts(req, res) {
+  try {
+    const products = await fetchAllenDataHubProducts()
+    return res.json(products)
+  } catch (err) {
+    console.error('[allendatahub] products failed', err)
+    return res.status(err?.status || 500).json({ error: err.message, payload: err.payload })
+  }
+}
+
+export async function createAllenDataHubPurchase(req, res) {
+  try {
+    const { user_id, network, volume, phoneNumber, currency } = req.body
+    if (!user_id || !network || !volume || !phoneNumber || !currency) {
+      return res.status(400).json({ error: 'user_id, network, volume, phoneNumber and currency are required' })
+    }
+
+    const user = await User.findById(user_id)
+    if (!user) return res.status(404).json({ error: 'User not found' })
+
+    const response = await purchaseAllenDataHubOrder({ network, volume, phoneNumber, apiKey: undefined })
+    const order = await DataOrder.create({
+      user_id,
+      data_package_id: null,
+      recipient_number: response.normalizedPhoneNumber,
+      package_name: `${network} ${volume}GB`,
+      package_gig: `${volume}GB`,
+      package_description: 'Purchased via AllenDataHub API',
+      price_local: Number(response?.order?.price || 0),
+      currency_used: currency,
+      order_status: response?.order?.status || 'pending',
+    })
+
+    return res.status(201).json({ ok: true, order, provider: 'allendatahub', response })
+  } catch (err) {
+    console.error('[dataOrders] allendatahub failed', err)
+    return res.status(err?.status || 500).json({ error: err.message, payload: err.payload })
   }
 }

@@ -64,7 +64,7 @@ export default function ServiceCatalog({ user, onOrder }: any) {
   return (
     <div>
       <PageHeader
-        title="Service Catalog"
+        title="Social Media Boost"
         subtitle="Browse all available SMM services with live local pricing."
         action={
           <button onClick={handleSync} disabled={syncing} className="btn-ghost">

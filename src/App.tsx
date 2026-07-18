@@ -15,7 +15,7 @@ const NAV = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'buy-numbers', label: 'Buy Phone Numbers', icon: Phone },
   { id: 'buy-data', label: 'Buy Data', icon: Zap },
-  { id: 'catalog', label: 'Service Catalog', icon: Package },
+  { id: 'catalog', label: 'Social Media Boost', icon: Package },
   { id: 'wallet', label: 'Wallet Deposits', icon: Wallet },
   { id: 'history', label: 'Order History', icon: History },
   { id: 'profile', label: 'Profile', icon: UserCircle },
