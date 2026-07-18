@@ -10,8 +10,11 @@ export default function Admin({ user }: any) {
   const [users, setUsers] = useState<any[]>([])
   const [orders, setOrders] = useState<any[]>([])
   const [services, setServices] = useState<any[]>([])
+  const [dataPackages, setDataPackages] = useState<any[]>([])
   const [pricingOverrides, setPricingOverrides] = useState<any[]>([])
   const [pricingSaving, setPricingSaving] = useState(false)
+  const [dataPackageSaving, setDataPackageSaving] = useState(false)
+  const [dataPackageMessage, setDataPackageMessage] = useState('')
   const [pricingMessage, setPricingMessage] = useState('')
   const [newPricingKey, setNewPricingKey] = useState('')
   const [newPricingValue, setNewPricingValue] = useState('')
@@ -25,8 +28,12 @@ export default function Admin({ user }: any) {
   }, [])
 
   useEffect(() => {
-    if (tab !== 'pricing') return
-    loadPricingOverrides()
+    if (tab === 'pricing') {
+      loadPricingOverrides()
+    }
+    if (tab === 'data-pricing') {
+      loadDataPackages()
+    }
   }, [tab])
 
   async function fetchAll() {
@@ -40,6 +47,36 @@ export default function Admin({ user }: any) {
       console.error(err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function loadDataPackages() {
+    try {
+      const [livePackages, storedPackages] = await Promise.all([api.listAllenDataHubProducts(), api.listDataPackages()])
+      const stored = Array.isArray(storedPackages) ? storedPackages : []
+      const merged = (Array.isArray(livePackages) && livePackages.length > 0 ? livePackages : stored).map((pkg: any) => {
+        const match = stored.find((entry: any) => String(entry._id || '') === String(pkg._id || '') || (
+          String(entry.network || '').toLowerCase() === String(pkg.network || '').toLowerCase() &&
+          String(entry.name || '').toLowerCase() === String(pkg.name || '').toLowerCase() &&
+          String(entry.gig || '').toLowerCase() === String(pkg.gig || pkg.dataAmount || '').toLowerCase()
+        ))
+
+        return {
+          ...pkg,
+          _id: match?._id || null,
+          network: match?.network || pkg.network || '',
+          name: match?.name || pkg.name || '',
+          gig: match?.gig || pkg.gig || pkg.dataAmount || '',
+          description: match?.description || pkg.description || '',
+          local_price: match?.local_price ?? pkg.local_price ?? pkg.apiPrice ?? 0,
+        }
+      })
+
+      setDataPackages(merged)
+      setDataPackageMessage('')
+    } catch (err) {
+      console.error(err)
+      setDataPackageMessage('Unable to load data package overrides.')
     }
   }
 
@@ -112,6 +149,10 @@ export default function Admin({ user }: any) {
     setPricingOverrides((prev) => prev.map((entry, i) => i === index ? { ...entry, [field]: value } : entry))
   }
 
+  function updateDataPackageEntry(index: number, field: 'network' | 'name' | 'gig' | 'description' | 'local_price', value: string) {
+    setDataPackages((prev) => prev.map((entry, i) => i === index ? { ...entry, [field]: value } : entry))
+  }
+
   function removePricingEntry(index: number) {
     setPricingOverrides((prev) => prev.filter((_, i) => i !== index))
   }
@@ -148,6 +189,36 @@ export default function Admin({ user }: any) {
     }
   }
 
+  async function saveDataPackages() {
+    setDataPackageSaving(true)
+    setDataPackageMessage('')
+
+    try {
+      await Promise.all(dataPackages.map((pkg) => {
+        const payload = {
+          network: pkg.network,
+          name: pkg.name,
+          gig: pkg.gig,
+          description: pkg.description,
+          local_price: Number(pkg.local_price || 0),
+        }
+
+        if (pkg._id) {
+          return api.updateDataPackage(pkg._id, payload)
+        }
+
+        return api.createDataPackage(payload)
+      }))
+      await loadDataPackages()
+      setDataPackageMessage('Data package overrides updated successfully.')
+    } catch (err) {
+      console.error(err)
+      setDataPackageMessage('Unable to save data package overrides.')
+    } finally {
+      setDataPackageSaving(false)
+    }
+  }
+
   return (
     <div>
       <PageHeader
@@ -167,6 +238,7 @@ export default function Admin({ user }: any) {
             <Tab label="Orders" id="orders" icon={FileText} active={tab === 'orders'} onClick={() => setTab('orders')} />
             <Tab label="Services" id="services" icon={Package} active={tab === 'services'} onClick={() => setTab('services')} />
             <Tab label="Phone Pricing" id="pricing" icon={Phone} active={tab === 'pricing'} onClick={() => setTab('pricing')} />
+            <Tab label="Data Pricing" id="data-pricing" icon={Package} active={tab === 'data-pricing'} onClick={() => setTab('data-pricing')} />
             <Tab label="Create Service" id="create" icon={PlusSquare} active={tab === 'create'} onClick={() => setTab('create')} />
             <Tab label="Create Data Package" id="create-data" icon={Package} active={tab === 'create-data'} onClick={() => setTab('create-data')} />
           </div>
@@ -332,6 +404,40 @@ export default function Admin({ user }: any) {
                     {pricingSaving ? <><Save size={15} className="animate-pulse" /> Saving…</> : <><Save size={15} /> Save pricing</>}
                   </button>
                   {pricingMessage && <p className={`text-sm ${pricingMessage.includes('successfully') ? 'text-emerald-400' : 'text-amber-400'}`}>{pricingMessage}</p>}
+                </div>
+              </div>
+            </section>
+          )}
+
+          {tab === 'data-pricing' && (
+            <section>
+              <div className="card p-5">
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold text-white">Buy data package overrides</h3>
+                  <p className="mt-1 text-sm text-slate-400">Adjust the visible package names, gig values, and local prices that appear in the buy-data flow.</p>
+                </div>
+
+                <div className="space-y-3">
+                  {dataPackages.length === 0 ? (
+                    <p className="text-sm text-slate-400">No data package overrides found yet. Create one from the data package form and then return here to edit it.</p>
+                  ) : (
+                    dataPackages.map((pkg, index) => (
+                      <div key={pkg._id || `${pkg.name}-${index}`} className="grid gap-2 rounded-2xl border border-ink-700 bg-ink-850/70 p-3 md:grid-cols-[1.2fr_1fr_0.9fr_1.1fr_0.8fr]">
+                        <input value={pkg.network || ''} onChange={(e) => updateDataPackageEntry(index, 'network', e.target.value)} placeholder="Network" className="input" />
+                        <input value={pkg.name || ''} onChange={(e) => updateDataPackageEntry(index, 'name', e.target.value)} placeholder="Package name" className="input" />
+                        <input value={pkg.gig || ''} onChange={(e) => updateDataPackageEntry(index, 'gig', e.target.value)} placeholder="Gig" className="input" />
+                        <input value={pkg.description || ''} onChange={(e) => updateDataPackageEntry(index, 'description', e.target.value)} placeholder="Description" className="input" />
+                        <input type="number" min="0" step="0.01" value={pkg.local_price ?? ''} onChange={(e) => updateDataPackageEntry(index, 'local_price', e.target.value)} placeholder="Price" className="input" />
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <button type="button" onClick={saveDataPackages} className="btn bg-brand-500 text-ink-950" disabled={dataPackageSaving}>
+                    {dataPackageSaving ? 'Saving…' : 'Save data package overrides'}
+                  </button>
+                  {dataPackageMessage && <p className={`text-sm ${dataPackageMessage.includes('successfully') ? 'text-emerald-400' : 'text-amber-400'}`}>{dataPackageMessage}</p>}
                 </div>
               </div>
             </section>

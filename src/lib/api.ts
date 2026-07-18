@@ -40,6 +40,7 @@ export const api = {
   syncServices: () => request('/services/sync', { method: 'POST' }),
   createService: (body) => request('/services', { method: 'POST', body: JSON.stringify(body) }),
   createDataPackage: (body) => request('/datapackages', { method: 'POST', body: JSON.stringify(body) }),
+  updateDataPackage: (id, body) => request(`/datapackages/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   listDataPackages: (params = {}) => {
     const qs = new URLSearchParams(params).toString()
     return request(`/datapackages${qs ? '?' + qs : ''}`)

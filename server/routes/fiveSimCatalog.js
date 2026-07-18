@@ -2,6 +2,7 @@ import { Router } from 'express'
 import axios from 'axios'
 import { FIVE_SIM_API_URL, FIVE_SIM_API_KEY, PROVIDER_OPERATOR, USE_REAL_PROVIDER } from '../config/index.js'
 import { getAllPhoneNumberPriceOverrides, getCustomPhoneNumberPrice, savePhoneNumberPriceOverrides } from '../config/phoneNumberPricing.js'
+import { User } from '../models/index.js'
 
 const router = Router()
 const FIVE_SIM_BASE = String(FIVE_SIM_API_URL || 'https://5sim.net/v1').replace(/\/+$/, '')
@@ -170,7 +171,7 @@ router.get('/sms/products/:country', async (req, res) => {
 
 router.post('/sms/buy-number', async (req, res) => {
   try {
-    const { country = 'any', product, currency = 'GHS' } = req.body || {}
+    const { country = 'any', product, currency = 'GHS', user_id, price } = req.body || {}
 
     if (!USE_REAL_PROVIDER) {
       return res.status(503).json({ error: 'Provider integration disabled. Set USE_REAL_PROVIDER=true to enable real purchases.' })
@@ -184,6 +185,22 @@ router.post('/sms/buy-number', async (req, res) => {
     })
 
     if (provResp.status === 200) {
+      const chargeAmount = Number(price || product?.price || 0)
+      if (user_id) {
+        const user = await User.findById(user_id)
+        if (!user) {
+          return res.status(404).json({ error: 'User not found' })
+        }
+
+        const userBalance = Number(user.wallet_balance || 0)
+        if (userBalance < chargeAmount) {
+          return res.status(402).json({ error: 'Insufficient wallet balance', required: chargeAmount, available: userBalance })
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(user_id, { $inc: { wallet_balance: -chargeAmount } }, { new: true })
+        return res.json({ ok: true, order: provResp.data, wallet_balance: updatedUser?.wallet_balance ?? userBalance })
+      }
+
       return res.json({ ok: true, order: provResp.data })
     }
 

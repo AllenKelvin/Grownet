@@ -42,7 +42,14 @@ export default function App() {
     const saved = localStorage.getItem('grownet-user')
     if (saved) {
       try {
-        setUser(JSON.parse(saved))
+        const parsed = JSON.parse(saved)
+        setUser(parsed)
+        api.getUser(parsed._id)
+          .then((freshUser) => {
+            setUser(freshUser)
+            localStorage.setItem('grownet-user', JSON.stringify(freshUser))
+          })
+          .catch(() => {})
       } catch {
         localStorage.removeItem('grownet-user')
       }
@@ -61,6 +68,7 @@ export default function App() {
     if (!user) return
     const u = await api.getUser(user._id)
     setUser(u)
+    localStorage.setItem('grownet-user', JSON.stringify(u))
   }
 
   if (loading) {
@@ -93,8 +101,8 @@ export default function App() {
   const ActiveView = () => {
     switch (active) {
       case 'dashboard': return <Dashboard user={user} onNavigate={setActive} />
-      case 'buy-numbers': return <BuyPhoneNumbers user={user} />
-      case 'buy-data': return <BuyData user={user} />
+      case 'buy-numbers': return <BuyPhoneNumbers user={user} onUserUpdated={refreshUser} />
+      case 'buy-data': return <BuyData user={user} onUserUpdated={refreshUser} />
       case 'catalog': return <ServiceCatalog user={user} />
       case 'wallet': return <WalletDeposits user={user} onDeposited={refreshUser} />
       case 'history': return <OrderHistory user={user} />
@@ -228,7 +236,7 @@ function Brand() {
       </div>
       <div>
         <p className="text-sm font-bold tracking-tight text-white">Grownet</p>
-        <p className="text-[10px] uppercase tracking-widest text-slate-500">SMM Reseller</p>
+        <p className="text-[10px] uppercase tracking-widest text-slate-500">CENTER FOR ALL</p>
       </div>
     </div>
   )

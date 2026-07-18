@@ -14,6 +14,8 @@ import {
 import { PageHeader } from '../components/ui'
 import { formatMoney } from '../lib/currency'
 
+const apiBase = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '')
+
 function formatCountdown(ms: number) {
   const safe = Math.max(0, ms)
   const mins = Math.floor(safe / 60000)
@@ -99,7 +101,7 @@ function ProductLogo({ name, className = '' }) {
   )
 }
 
-export default function BuyPhoneNumbers({ user }) {
+export default function BuyPhoneNumbers({ user, onUserUpdated }: any) {
   const [countries, setCountries] = useState<any[]>([])
   const [products, setProducts] = useState<any[]>([])
   const [selectedCountry, setSelectedCountry] = useState('')
@@ -137,7 +139,6 @@ export default function BuyPhoneNumbers({ user }) {
     let cancelled = false
     ;(async () => {
       try {
-        const apiBase = import.meta.env.VITE_API_URL || '/api'
         const res = await fetch(`${apiBase}/sms/countries`)
         const data = await res.json()
         if (!cancelled) {
@@ -167,7 +168,6 @@ export default function BuyPhoneNumbers({ user }) {
     ;(async () => {
       try {
         setLoadingProducts(true)
-        const apiBase = import.meta.env.VITE_API_URL || '/api'
         const res = await fetch(`${apiBase}/sms/products/${encodeURIComponent(selectedCountry)}`)
         const data = await res.json()
         if (!cancelled) {
@@ -220,7 +220,6 @@ export default function BuyPhoneNumbers({ user }) {
     setFeedback('')
 
     try {
-      const apiBase = import.meta.env.VITE_API_URL || '/api'
       const res = await fetch(`${apiBase}/sms/buy-number`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -228,6 +227,8 @@ export default function BuyPhoneNumbers({ user }) {
           country: selectedCountryMeta.value,
           product: selectedProductMeta,
           currency,
+          user_id: user?._id,
+          price: localizedPrice,
         }),
       })
       const data = await res.json()
@@ -250,7 +251,13 @@ export default function BuyPhoneNumbers({ user }) {
       }
 
       setOrders((prev) => [nextOrder, ...prev].slice(0, 6))
-      setWalletBalance((prev) => Math.max(prev - (nextOrder.price || 0), 0))
+      const nextWalletBalance = typeof data.wallet_balance === 'number'
+        ? data.wallet_balance
+        : Math.max(walletBalance - (nextOrder.price || 0), 0)
+      setWalletBalance(nextWalletBalance)
+      if (typeof onUserUpdated === 'function') {
+        await onUserUpdated()
+      }
       setActiveModal(nextOrder)
     } catch (error) {
       console.error(error)

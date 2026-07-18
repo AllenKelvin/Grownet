@@ -14,17 +14,39 @@ const PACKAGE_OPTIONS: Record<string, Array<{ value: number; label: string }>> =
   mtn: [
     { value: 1, label: '1GB' },
     { value: 2, label: '2GB' },
+    { value: 3, label: '3GB' },
+    { value: 4, label: '4GB' },
     { value: 5, label: '5GB' },
+    { value: 6, label: '5GB' },
+    { value: 8, label: '8GB' },
+    { value: 10, label: '10GB' },
+    { value: 15, label: '15GB' },
+    { value: 20, label: '20GB' },
+    { value: 25, label: '25GB' },
+    { value: 30, label: '30GB' },
   ],
   telecel: [
-    { value: 1, label: '1GB' },
-    { value: 2, label: '2GB' },
     { value: 5, label: '5GB' },
+    { value: 10, label: '10GB' },
+    { value: 15, label: '15GB' },
+    { value: 20, label: '20GB' },
+    { value: 25, label: '25GB' },
+    { value: 30, label: '30GB' },
+    { value: 40, label: '40GB' },
   ],
   airteltigo: [
     { value: 1, label: '1GB' },
     { value: 2, label: '2GB' },
+    { value: 3, label: '3GB' },
+    { value: 4, label: '4GB' },
     { value: 5, label: '5GB' },
+    { value: 6, label: '6GB' },
+    { value: 7, label: '7GB' },
+    { value: 8, label: '8GB' },
+    { value: 10, label: '10GB' },
+    { value: 12, label: '12GB' },
+    { value: 15, label: '15GB' },
+    { value: 20, label: '20GB' },
   ],
 }
 
@@ -36,7 +58,7 @@ function resolvePackageVolume(pkg: any) {
   return Number.isFinite(numeric) && numeric > 0 ? numeric : 1
 }
 
-export default function BuyData({ user }: any) {
+export default function BuyData({ user, onUserUpdated }: any) {
   const [services, setServices] = useState<any[]>([])
   const [history, setHistory] = useState<any[]>([])
   const [selectedNetwork, setSelectedNetwork] = useState(NETWORKS[0].id)
@@ -50,13 +72,15 @@ export default function BuyData({ user }: any) {
   useEffect(() => {
     ;(async () => {
       try {
-        const localPackages = await api.listDataPackages()
-        const nextServices = Array.isArray(localPackages) && localPackages.length > 0 ? localPackages : await api.listAllenDataHubProducts()
+        const allendataPackages = await api.listAllenDataHubProducts()
+        const nextServices = Array.isArray(allendataPackages) && allendataPackages.length > 0
+          ? allendataPackages
+          : await api.listDataPackages()
         setServices(nextServices)
       } catch (err) {
         console.error(err)
         try {
-          const fallback = await api.listAllenDataHubProducts()
+          const fallback = await api.listDataPackages()
           setServices(fallback)
         } catch (fallbackErr) {
           console.error(fallbackErr)
@@ -115,6 +139,9 @@ export default function BuyData({ user }: any) {
       }
       const data = await api.createAllenDataHubOrder(payload)
       setHistory((prev) => [data.order, ...prev])
+      if (typeof onUserUpdated === 'function') {
+        await onUserUpdated()
+      }
       setSelectedPackage(null)
       setPhoneNumber('')
       setFeedback('Data order created successfully.')
@@ -138,7 +165,7 @@ export default function BuyData({ user }: any) {
             <p className="mt-1 text-xs text-slate-500">{pkg.gig || 'Unknown GB'}</p>
           </div>
           <div className="rounded-2xl bg-ink-800 px-3 py-1 text-sm text-slate-300">
-            {formatMoney(pkg.local_price || 0, user.currency || 'GHS')}
+            {formatMoney(pkg.local_price || pkg.apiPrice || 0, user.currency || 'GHS')}
           </div>
         </div>
         {pkg.description && <p className="mt-3 text-xs text-slate-400">{pkg.description}</p>}
@@ -170,7 +197,7 @@ export default function BuyData({ user }: any) {
                   onClick={() => {
                     setSelectedNetwork(network.id)
                     setSelectedPackage(null)
-                    setSelectedVolume(1)
+                    setSelectedVolume((PACKAGE_OPTIONS[network.id] || PACKAGE_OPTIONS.mtn)[0]?.value || 1)
                     setFeedback('')
                   }}
                   className={`rounded-3xl border p-4 text-left transition ${selectedNetwork === network.id ? 'border-brand-500/50 bg-brand-500/5 shadow-lg' : 'border-ink-700 bg-ink-900 hover:border-slate-500'}`}

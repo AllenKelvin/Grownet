@@ -237,9 +237,10 @@ export async function createService(req, res) {
 // Create a data package (admin) — simpler variant for data bundles
 export async function createDataPackage(req, res) {
   try {
-    const { network, name, gig, description, local_rate, currency } = req.body
-    if (!network || !name || !local_rate) {
-      return res.status(400).json({ error: 'network, name and local_rate are required' })
+    const { network, name, gig, description, local_rate, local_price, currency } = req.body
+    const resolvedPrice = Number(local_price ?? local_rate ?? 0)
+    if (!network || !name || !Number.isFinite(resolvedPrice) || resolvedPrice <= 0) {
+      return res.status(400).json({ error: 'network, name and a valid local_price/local_rate are required' })
     }
 
     const pkg = await DataPackage.create({
@@ -247,11 +248,33 @@ export async function createDataPackage(req, res) {
       name: String(name),
       gig: String(gig || ''),
       description: String(description || ''),
-      local_price: Number(local_rate),
+      local_price: resolvedPrice,
       currency: String(currency || 'GHS'),
     })
 
     return res.status(201).json(pkg)
+  } catch (err) {
+    return res.status(500).json({ error: err.message })
+  }
+}
+
+export async function updateDataPackage(req, res) {
+  try {
+    const { id } = req.params
+    const { network, name, gig, description, local_price, currency } = req.body
+    const pkg = await DataPackage.findById(id)
+    if (!pkg) return res.status(404).json({ error: 'Data package not found' })
+
+    const updates = {}
+    if (network !== undefined) updates.network = String(network)
+    if (name !== undefined) updates.name = String(name)
+    if (gig !== undefined) updates.gig = String(gig)
+    if (description !== undefined) updates.description = String(description)
+    if (local_price !== undefined) updates.local_price = Number(local_price)
+    if (currency !== undefined) updates.currency = String(currency)
+
+    const updated = await DataPackage.findByIdAndUpdate(id, { $set: updates }, { new: true })
+    return res.json(updated)
   } catch (err) {
     return res.status(500).json({ error: err.message })
   }
