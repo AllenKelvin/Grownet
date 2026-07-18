@@ -64,7 +64,7 @@ export async function listAllenDataHubProducts(req, res) {
 
 export async function createAllenDataHubPurchase(req, res) {
   try {
-    const { user_id, network, volume, phoneNumber, currency } = req.body
+    const { user_id, network, volume, phoneNumber, currency, packageName, packageGig, priceLocal } = req.body
     if (!user_id || !network || !volume || !phoneNumber || !currency) {
       return res.status(400).json({ error: 'user_id, network, volume, phoneNumber and currency are required' })
     }
@@ -77,10 +77,10 @@ export async function createAllenDataHubPurchase(req, res) {
       user_id,
       data_package_id: null,
       recipient_number: response.normalizedPhoneNumber,
-      package_name: `${network} ${volume}GB`,
-      package_gig: `${volume}GB`,
+      package_name: String(packageName || `${network} ${volume}GB`),
+      package_gig: String(packageGig || `${volume}GB`),
       package_description: 'Purchased via AllenDataHub API',
-      price_local: Number(response?.order?.price || 0),
+      price_local: Number(priceLocal || response?.order?.price || 0),
       currency_used: currency,
       order_status: response?.order?.status || 'pending',
     })

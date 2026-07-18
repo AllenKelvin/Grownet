@@ -143,9 +143,6 @@ export default function BuyPhoneNumbers({ user }) {
         if (!cancelled) {
           const nextCountries = data.countries || []
           setCountries(nextCountries)
-          if (!selectedCountry && nextCountries.length) {
-            setSelectedCountry(nextCountries[0].value)
-          }
         }
       } catch (error) {
         console.error(error)
@@ -176,7 +173,7 @@ export default function BuyPhoneNumbers({ user }) {
         if (!cancelled) {
           const nextProducts = data.products || []
           setProducts(nextProducts)
-          setSelectedProduct(nextProducts[0] || null)
+          setSelectedProduct(null)
         }
       } catch (error) {
         console.error(error)
@@ -284,72 +281,6 @@ export default function BuyPhoneNumbers({ user }) {
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Step 1</p>
-                <h2 className="mt-1 text-lg font-semibold text-white">Find website or app</h2>
-              </div>
-              <button
-                onClick={() => setShowAllApps((value) => !value)}
-                className="rounded-full border border-brand-500/20 bg-brand-500/10 px-3 py-1.5 text-xs font-medium text-brand-300"
-              >
-                {showAllApps ? 'Show fewer' : `Show all ${products.length}`}
-              </button>
-            </div>
-
-            <div className="relative mb-4">
-              <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-              <input
-                value={appSearch}
-                onChange={(event) => setAppSearch(event.target.value)}
-                placeholder="Search app or service"
-                className="w-full rounded-2xl border border-ink-700 bg-ink-850/80 py-2.5 pl-9 pr-3 text-sm text-slate-200 outline-none"
-              />
-            </div>
-
-            {loadingProducts ? (
-              <div className="rounded-2xl border border-ink-700 bg-ink-850/70 p-3 text-sm text-slate-400">Loading live products…</div>
-            ) : visibleApps.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-ink-700 bg-ink-850/60 p-4 text-sm text-slate-500">
-                No in-stock services are available for this country yet.
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {visibleApps.map((app) => {
-                  const { icon: Icon, accent } = getProductMeta(app.name)
-                  const selected = app.name === selectedProductMeta?.name
-                  return (
-                    <button
-                      key={app.id || app.name}
-                      onClick={() => setSelectedProduct(app)}
-                      className={`flex w-full flex-col gap-3 rounded-2xl border px-3 py-3 text-left transition sm:flex-row sm:items-center sm:justify-between ${selected ? 'border-brand-500/40 bg-slate-800/70 shadow-[0_0_0_1px_rgba(14,165,233,0.15)]' : 'border-ink-700 bg-ink-850/70 hover:border-ink-600'}`}
-                    >
-                      <div className="flex min-w-0 items-center gap-3">
-                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${accent} p-0.5 text-slate-100`}>
-                          <ProductLogo name={app.name} className="h-full w-full rounded-[14px]" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <Star size={13} className="shrink-0 text-amber-400" fill="currentColor" />
-                            <p className="truncate text-sm font-semibold text-white">{app.name}</p>
-                          </div>
-                          <p className="mt-1 text-xs text-slate-500">from {formatMoney(app.price, currency)}</p>
-                          <p className="text-xs font-medium text-emerald-400">{app.qty} in stock</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 self-start sm:self-auto">
-                        <span className="rounded-full bg-ink-900 px-2.5 py-1 text-[11px] uppercase tracking-[0.2em] text-slate-500">
-                          {app.category}
-                        </span>
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-
-          <div className="card p-5">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Step 2</p>
                 <h2 className="mt-1 text-lg font-semibold text-white">Select country</h2>
               </div>
               <button
@@ -395,6 +326,77 @@ export default function BuyPhoneNumbers({ user }) {
               </div>
             )}
           </div>
+
+          <div className="card p-5">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Step 2</p>
+                <h2 className="mt-1 text-lg font-semibold text-white">Find website or app</h2>
+              </div>
+              <button
+                onClick={() => setShowAllApps((value) => !value)}
+                className="rounded-full border border-brand-500/20 bg-brand-500/10 px-3 py-1.5 text-xs font-medium text-brand-300"
+              >
+                {showAllApps ? 'Show fewer' : `Show all ${products.length}`}
+              </button>
+            </div>
+
+            <div className="relative mb-4">
+              <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+              <input
+                value={appSearch}
+                onChange={(event) => setAppSearch(event.target.value)}
+                placeholder="Search app or service"
+                className="w-full rounded-2xl border border-ink-700 bg-ink-850/80 py-2.5 pl-9 pr-3 text-sm text-slate-200 outline-none"
+              />
+            </div>
+
+            {loadingProducts ? (
+              <div className="rounded-2xl border border-ink-700 bg-ink-850/70 p-3 text-sm text-slate-400">Loading live products…</div>
+            ) : !selectedCountry ? (
+              <div className="rounded-2xl border border-dashed border-ink-700 bg-ink-850/60 p-4 text-sm text-slate-500">
+                Select a country first to view available apps and services.
+              </div>
+            ) : visibleApps.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-ink-700 bg-ink-850/60 p-4 text-sm text-slate-500">
+                No in-stock services are available for this country yet.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {visibleApps.map((app) => {
+                  const { icon: Icon, accent } = getProductMeta(app.name)
+                  const selected = app.name === selectedProductMeta?.name
+                  return (
+                    <button
+                      key={app.id || app.name}
+                      onClick={() => setSelectedProduct(app)}
+                      className={`flex w-full flex-col gap-3 rounded-2xl border px-3 py-3 text-left transition sm:flex-row sm:items-center sm:justify-between ${selected ? 'border-brand-500/40 bg-slate-800/70 shadow-[0_0_0_1px_rgba(14,165,233,0.15)]' : 'border-ink-700 bg-ink-850/70 hover:border-ink-600'}`}
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${accent} p-0.5 text-slate-100`}>
+                          <ProductLogo name={app.name} className="h-full w-full rounded-[14px]" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <Star size={13} className="shrink-0 text-amber-400" fill="currentColor" />
+                            <p className="truncate text-sm font-semibold text-white">{app.name}</p>
+                          </div>
+                          <p className="mt-1 text-xs text-slate-500">from {formatMoney(app.price, currency)}</p>
+                          <p className="text-xs font-medium text-emerald-400">{app.qty} in stock</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 self-start sm:self-auto">
+                        <span className="rounded-full bg-ink-900 px-2.5 py-1 text-[11px] uppercase tracking-[0.2em] text-slate-500">
+                          {app.category}
+                        </span>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
 
           <div className="card p-5">
             <div className="mb-3 flex items-center justify-between">

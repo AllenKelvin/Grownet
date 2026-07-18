@@ -28,6 +28,14 @@ const PACKAGE_OPTIONS: Record<string, Array<{ value: number; label: string }>> =
   ],
 }
 
+function resolvePackageVolume(pkg: any) {
+  const raw = String(pkg?.gig || pkg?.dataAmount || pkg?.name || '').toLowerCase()
+  const match = raw.match(/(\d+(?:\.\d+)?)/)
+  if (match) return Number(match[1])
+  const numeric = Number(pkg?.volume || pkg?.size || pkg?.value || pkg?.amount)
+  return Number.isFinite(numeric) && numeric > 0 ? numeric : 1
+}
+
 export default function BuyData({ user }: any) {
   const [services, setServices] = useState<any[]>([])
   const [history, setHistory] = useState<any[]>([])
@@ -42,12 +50,13 @@ export default function BuyData({ user }: any) {
   useEffect(() => {
     ;(async () => {
       try {
-        const all = await api.listAllenDataHubProducts()
-        setServices(all)
+        const localPackages = await api.listDataPackages()
+        const nextServices = Array.isArray(localPackages) && localPackages.length > 0 ? localPackages : await api.listAllenDataHubProducts()
+        setServices(nextServices)
       } catch (err) {
         console.error(err)
         try {
-          const fallback = await api.listDataPackages()
+          const fallback = await api.listAllenDataHubProducts()
           setServices(fallback)
         } catch (fallbackErr) {
           console.error(fallbackErr)
@@ -79,7 +88,7 @@ export default function BuyData({ user }: any) {
     setSelectedPackage(pkg)
     setPhoneNumber('')
     setFeedback('')
-    setSelectedVolume(1)
+    setSelectedVolume(resolvePackageVolume(pkg))
   }
 
   const handleBuy = async (e: any) => {
@@ -100,6 +109,9 @@ export default function BuyData({ user }: any) {
         volume: selectedVolume,
         phoneNumber: digits,
         currency: user.currency || 'GHS',
+        packageName: selectedPackage?.name || `${selectedNetworkMeta.name} ${selectedVolume}GB`,
+        packageGig: selectedPackage?.gig || `${selectedVolume}GB`,
+        priceLocal: Number(selectedPackage?.local_price || selectedPackage?.apiPrice || 0),
       }
       const data = await api.createAllenDataHubOrder(payload)
       setHistory((prev) => [data.order, ...prev])
@@ -155,7 +167,12 @@ export default function BuyData({ user }: any) {
               {NETWORKS.map((network) => (
                 <button
                   key={network.id}
-                  onClick={() => setSelectedNetwork(network.id)}
+                  onClick={() => {
+                    setSelectedNetwork(network.id)
+                    setSelectedPackage(null)
+                    setSelectedVolume(1)
+                    setFeedback('')
+                  }}
                   className={`rounded-3xl border p-4 text-left transition ${selectedNetwork === network.id ? 'border-brand-500/50 bg-brand-500/5 shadow-lg' : 'border-ink-700 bg-ink-900 hover:border-slate-500'}`}
                 >
                   <div className={`flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br ${network.color} text-black`}>
@@ -195,7 +212,7 @@ export default function BuyData({ user }: any) {
                   <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Step 3</p>
                   <h2 className="mt-1 text-lg font-semibold text-white">Enter recipient number</h2>
                 </div>
-                <span className="rounded-full bg-ink-800 px-3 py-1 text-xs text-slate-400">{selectedPackage.gig || 'Data package'}</span>
+                <span className="rounded-full bg-ink-800 px-3 py-1 text-xs text-slate-400">{selectedPackage.gig || selectedPackage.dataAmount || 'Data package'}</span>
               </div>
               <form onSubmit={handleBuy} className="space-y-4">
                 <div>
