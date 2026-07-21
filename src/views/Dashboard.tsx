@@ -68,6 +68,11 @@ export default function Dashboard({ user, onNavigate }) {
       <PageHeader
         title={`Welcome back, ${user.name.split(' ')[0]}`}
         subtitle="Your SMM reseller overview at a glance."
+        action={(
+          <button onClick={() => onNavigate('admin')} className="btn-ghost">
+            Admin Console
+          </button>
+        )}
       />
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -134,7 +139,7 @@ export default function Dashboard({ user, onNavigate }) {
           </div>
           {stats.recent_orders.length === 0 ? (
             <div className="py-8 text-center text-sm text-slate-500">
-              No orders yet. <button onClick={() => onNavigate('catalog')} className="text-brand-400 hover:text-brand-300">Place your first order →</button>
+              No orders yet. <button onClick={() => onNavigate('buy-numbers')} className="text-brand-400 hover:text-brand-300">Buy your first phone number →</button>
             </div>
           ) : (
             <div className="space-y-2">

@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, Package, ShoppingCart, Layers, Wallet, History, Zap, Menu, X, UserCircle, FileText, Phone, Send } from 'lucide-react'
+import { LayoutDashboard, ShoppingCart, Layers, Wallet, History, Zap, Menu, X, UserCircle, FileText, Phone, Send } from 'lucide-react'
 import { api } from './lib/api'
 import AuthPage from './views/Auth'
 import Dashboard from './views/Dashboard'
-import ServiceCatalog from './views/ServiceCatalog'
 import WalletDeposits from './views/WalletDeposits'
 import OrderHistory from './views/OrderHistory'
 import Profile from './views/Profile'
@@ -15,11 +14,9 @@ const NAV = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'buy-numbers', label: 'Buy Phone Numbers', icon: Phone },
   { id: 'buy-data', label: 'Buy Data', icon: Zap },
-  { id: 'catalog', label: 'Social Media Boost', icon: Package },
   { id: 'wallet', label: 'Wallet Deposits', icon: Wallet },
   { id: 'history', label: 'Order History', icon: History },
   { id: 'profile', label: 'Profile', icon: UserCircle },
-  { id: 'admin', label: 'Admin Console', icon: FileText },
 ]
 
 const MOBILE_HIDDEN_IDS = ['wallet', 'profile']
@@ -103,7 +100,6 @@ export default function App() {
       case 'dashboard': return <Dashboard user={user} onNavigate={setActive} />
       case 'buy-numbers': return <BuyPhoneNumbers user={user} onUserUpdated={refreshUser} />
       case 'buy-data': return <BuyData user={user} onUserUpdated={refreshUser} />
-      case 'catalog': return <ServiceCatalog user={user} />
       case 'wallet': return <WalletDeposits user={user} onDeposited={refreshUser} />
       case 'history': return <OrderHistory user={user} />
       case 'profile': return <Profile user={user} onUpdated={refreshUser} onLogout={() => {

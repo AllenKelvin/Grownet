@@ -279,7 +279,7 @@ export default function BuyPhoneNumbers({ user, onUserUpdated }: any) {
     <div>
       <PageHeader
         title="Buy Phone Numbers"
-        subtitle="Browse live 5sim countries and current in-stock services, then place an activation request instantly."
+        subtitle="Browse live Grownet countries and current in-stock services, then place an activation request instantly."
       />
 
       <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">

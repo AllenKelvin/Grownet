@@ -5,6 +5,7 @@ import { User, Service, Order, Deposit, DataPackage } from '../models/index.js'
 import { computeLocalRate, convertCurrency } from '../utils/exchange.js'
 import { providerFetchServices } from '../services/providerClient.js'
 import { PROVIDER_API_TYPE } from '../config/index.js'
+import { getAllPhoneNumberPriceOverrides } from '../config/phoneNumberPricing.js'
 
 // ---- Users ----
 export async function getCurrentUser(req, res) {
@@ -119,33 +120,92 @@ export async function forgotPassword(req, res) {
   }
 }
 
+function formatPhoneNumberPriceName(key = '') {
+  const normalized = String(key || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '')
+  const labels = {
+    default: 'Default phone number price',
+    usa: 'USA phone number price',
+    uk: 'UK phone number price',
+    india: 'India phone number price',
+    nigeria: 'Nigeria phone number price',
+    ghana: 'Ghana phone number price',
+    telegram: 'Telegram phone number price',
+    whatsapp: 'WhatsApp phone number price',
+    google: 'Google phone number price',
+    instagram: 'Instagram phone number price',
+    tiktok: 'TikTok phone number price',
+  }
+
+  return labels[normalized] || `${normalized || 'Phone number'} price`
+}
+
+function getPhoneNumberServiceEntries() {
+  const overrides = getAllPhoneNumberPriceOverrides()
+  const entries = Object.entries(overrides)
+    .map(([key, value]) => ({
+      key,
+      value: Number(value || 0),
+    }))
+    .filter((entry) => Number.isFinite(entry.value))
+    .sort((a, b) => a.key.localeCompare(b.key))
+
+  if (entries.length === 0) {
+    return [{
+      local_service_id: 1,
+      provider_service_id: 1,
+      category: 'Phone Numbers',
+      name: 'Default phone number price',
+      wholesale_rate_usd: 5,
+      local_rate: 5,
+      min_quantity: 1,
+      max_quantity: 1000,
+      refill_policy: false,
+    }]
+  }
+
+  return entries.map((entry, index) => ({
+    local_service_id: index + 1,
+    provider_service_id: index + 1,
+    category: 'Phone Numbers',
+    name: formatPhoneNumberPriceName(entry.key),
+    wholesale_rate_usd: entry.value,
+    local_rate: entry.value,
+    min_quantity: 1,
+    max_quantity: 1000,
+    refill_policy: false,
+  }))
+}
+
 // ---- Services ----
 export async function listServices(req, res) {
   const { category, q } = req.query
-  let services = await Service.find({})
-  // By default exclude Data category from the main service catalog
+  let services = await Service.find({}).sort({ local_service_id: 1 })
+
+  if (!services.length) {
+    services = getPhoneNumberServiceEntries()
+  }
+
   if (!category || category === 'All') {
     services = services.filter((s) => String(s.category || '').toLowerCase() !== 'data')
   } else if (category && category !== 'All') {
     services = services.filter((s) => s.category === category)
   }
+
   if (q) {
     const lc = q.toLowerCase()
     services = services.filter(
       (s) =>
-        s.name.toLowerCase().includes(lc) ||
+        String(s.name || '').toLowerCase().includes(lc) ||
         String(s.local_service_id).includes(lc) ||
-        s.category.toLowerCase().includes(lc),
+        String(s.category || '').toLowerCase().includes(lc),
     )
   }
+
   return res.json(services)
 }
 
 export async function listCategories(req, res) {
-  const services = await Service.find({})
-  // Exclude Data from default categories in the public catalog
-  const cats = [...new Set(services.map((s) => s.category))].filter((c) => String(c || '').toLowerCase() !== 'data').sort()
-  return res.json(cats)
+  return res.json(['Phone Numbers'])
 }
 
 export async function listDataPackages(req, res) {
@@ -157,47 +217,28 @@ export async function listDataPackages(req, res) {
   }
 }
 
-// Sync services from provider catalog + apply margin matrix
+// Sync services from phone-number pricing overrides so the DB reflects the active buy-phone-number catalog.
 export async function syncServices(req, res) {
   try {
-    const providerServices = await providerFetchServices()
-    const existing = await Service.find({})
-    const existingMap = new Map(existing.map((s) => [s.provider_service_id, s]))
-    let nextLocalId = (existing.reduce((m, s) => Math.max(m, s.local_service_id), 0) || 0) + 1
+    const phoneServices = getPhoneNumberServiceEntries()
+    await Service.deleteMany({})
 
-    // We compute local_rate for BOTH currencies and store NGN by default; the
-    // frontend re-computes per the user's currency for display. We store the
-    // NGN local_rate as the canonical value.
-    for (const ps of providerServices) {
-      const localRate = computeLocalRate(Number(ps.rate), 'NGN')
-      if (existingMap.has(ps.service)) {
-        const existingSvc = existingMap.get(ps.service)
-        await Service.findByIdAndUpdate(existingSvc._id, {
-          $set: {
-            name: ps.name,
-            category: ps.category,
-            wholesale_rate_usd: Number(ps.rate),
-            local_rate: localRate,
-            min_quantity: ps.min,
-            max_quantity: ps.max,
-            refill_policy: !!ps.refill,
-          },
-        })
-      } else {
-        await Service.create({
-          local_service_id: nextLocalId++,
-          provider_service_id: ps.service,
-          category: ps.category,
-          name: ps.name,
-          wholesale_rate_usd: Number(ps.rate),
-          local_rate: localRate,
-          min_quantity: ps.min,
-          max_quantity: ps.max,
-          refill_policy: !!ps.refill,
-        })
-      }
+    const created = []
+    for (const entry of phoneServices) {
+      created.push(await Service.create({
+        local_service_id: entry.local_service_id,
+        provider_service_id: entry.provider_service_id,
+        category: entry.category,
+        name: entry.name,
+        wholesale_rate_usd: entry.wholesale_rate_usd,
+        local_rate: entry.local_rate,
+        min_quantity: entry.min_quantity,
+        max_quantity: entry.max_quantity,
+        refill_policy: entry.refill_policy,
+      }))
     }
-    const refreshed = await Service.find({})
+
+    const refreshed = await Service.find({}).sort({ local_service_id: 1 })
     return res.json({ success: true, count: refreshed.length, services: refreshed })
   } catch (err) {
     return res.status(500).json({ error: err.message })

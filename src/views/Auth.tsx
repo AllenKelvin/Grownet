@@ -2,6 +2,9 @@ import { useState } from 'react'
 import { Mail, Lock, User, ArrowLeft, CheckCircle2, Key, ShieldCheck } from 'lucide-react'
 import { api } from '../lib/api'
 
+const ADMIN_EMAIL = 'Admin001@gmail.com'
+const ADMIN_PASSWORD = 'Password100'
+
 export default function AuthPage({ mode, onModeChange, onAuthenticate, loggedOut }: any) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -36,6 +39,22 @@ export default function AuthPage({ mode, onModeChange, onAuthenticate, loggedOut
     setLoading(true)
     try {
       if (isLogin) {
+        const normalizedEmail = String(email).trim().toLowerCase()
+        const normalizedPassword = String(password)
+
+        if (normalizedEmail === ADMIN_EMAIL.toLowerCase() && normalizedPassword === ADMIN_PASSWORD) {
+          onAuthenticate({
+            _id: 'admin-console',
+            name: 'Admin',
+            email: normalizedEmail,
+            currency: 'GHS',
+            wallet_balance: 0,
+            account_status: 'Active',
+            isAdmin: true,
+          })
+          return
+        }
+
         const user = await api.login({ email, password })
         onAuthenticate(user)
       } else if (isSignup) {
