@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Mail, Lock, User, ArrowLeft, CheckCircle2, Key, ShieldCheck } from 'lucide-react'
+import { Mail, Lock, User, ArrowLeft, CheckCircle2, Key, ShieldCheck, Eye, EyeOff } from 'lucide-react'
 import { api } from '../lib/api'
 
 const ADMIN_EMAIL = 'Admin001@gmail.com'
@@ -10,6 +10,7 @@ export default function AuthPage({ mode, onModeChange, onAuthenticate, loggedOut
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [currency] = useState('GHS')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -170,12 +171,20 @@ export default function AuthPage({ mode, onModeChange, onAuthenticate, loggedOut
               <div className="relative">
                 <Lock size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  className="input pl-10"
+                  className="input pl-10 pr-10"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((value) => !value)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 transition-colors hover:text-slate-300"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </div>
             </div>
           )}

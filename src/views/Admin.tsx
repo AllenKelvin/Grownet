@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
 import { PageHeader, Spinner, EmptyState, StatusBadge } from '../components/ui'
-import { RefreshCw, PlusSquare, Users, Package, FileText, Phone, Trash2, Save } from 'lucide-react'
+import { RefreshCw, PlusSquare, Users, Package, FileText, Phone, Trash2, Save, ShieldCheck, Wallet, ShoppingCart } from 'lucide-react'
 
 export default function Admin({ user }: any) {
   const [tab, setTab] = useState('users')
@@ -235,12 +235,11 @@ export default function Admin({ user }: any) {
 
           <div className="mb-6 flex flex-wrap items-center gap-3">
             <Tab label="Users" id="users" icon={Users} active={tab === 'users'} onClick={() => setTab('users')} />
-            <Tab label="Orders" id="orders" icon={FileText} active={tab === 'orders'} onClick={() => setTab('orders')} />
-            <Tab label="Services" id="services" icon={Package} active={tab === 'services'} onClick={() => setTab('services')} />
+            <Tab label="Orders" id="orders" icon={ShoppingCart} active={tab === 'orders'} onClick={() => setTab('orders')} />
             <Tab label="Phone Pricing" id="pricing" icon={Phone} active={tab === 'pricing'} onClick={() => setTab('pricing')} />
-            <Tab label="Data Pricing" id="data-pricing" icon={Package} active={tab === 'data-pricing'} onClick={() => setTab('data-pricing')} />
+            <Tab label="Data Pricing" id="data-pricing" icon={Wallet} active={tab === 'data-pricing'} onClick={() => setTab('data-pricing')} />
             <Tab label="Create Service" id="create" icon={PlusSquare} active={tab === 'create'} onClick={() => setTab('create')} />
-            <Tab label="Create Data Package" id="create-data" icon={Package} active={tab === 'create-data'} onClick={() => setTab('create-data')} />
+            <Tab label="Create Data Package" id="create-data" icon={ShieldCheck} active={tab === 'create-data'} onClick={() => setTab('create-data')} />
           </div>
 
       {loading ? (

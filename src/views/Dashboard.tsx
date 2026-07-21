@@ -68,11 +68,6 @@ export default function Dashboard({ user, onNavigate }) {
       <PageHeader
         title={`Welcome back, ${user.name.split(' ')[0]}`}
         subtitle="Your SMM reseller overview at a glance."
-        action={(
-          <button onClick={() => onNavigate('admin')} className="btn-ghost">
-            Admin Console
-          </button>
-        )}
       />
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
