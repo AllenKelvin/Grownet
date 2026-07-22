@@ -171,6 +171,26 @@ export async function providerCheckStatus(providerOrderId) {
   throw new Error(`[provider] 5sim status check failed: ${detail}`)
 }
 
+export async function providerFinishOrder(providerOrderId) {
+  if (!USE_REAL_PROVIDER) {
+    throw new Error('USE_REAL_PROVIDER=false — provider finish actions are disabled')
+  }
+
+  const data = await requestProvider(`/user/finish/${encodeURIComponent(String(providerOrderId))}`, { method: 'GET' })
+  if (data) return { ok: true, data }
+  return { ok: false, error: 'No response from provider finish endpoint' }
+}
+
+export async function providerCancelOrder(providerOrderId) {
+  if (!USE_REAL_PROVIDER) {
+    throw new Error('USE_REAL_PROVIDER=false — provider cancel actions are disabled')
+  }
+
+  const data = await requestProvider(`/user/cancel/${encodeURIComponent(String(providerOrderId))}`, { method: 'GET' })
+  if (data) return { ok: true, data }
+  return { ok: false, error: 'No response from provider cancel endpoint' }
+}
+
 /**
  * Fetch the provider's service catalog (wholesale USD rates).
  */

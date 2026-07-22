@@ -286,6 +286,7 @@ export default function BuyPhoneNumbers({ user, onUserUpdated }: any) {
         body: JSON.stringify({
           country: selectedCountryMeta.value,
           product: selectedProductMeta.id,
+          productName: selectedProductMeta.name,
           currency,
           user_id: user?._id,
           price: localizedPrice,
@@ -299,16 +300,19 @@ export default function BuyPhoneNumbers({ user, onUserUpdated }: any) {
         return
       }
 
-      const normalizedPhoneNumber = data.order.phoneNumber || data.order.phone || data.order.number || data.order.phone_number || ''
+      const backendOrder = data.order || {}
+      const normalizedPhoneNumber = backendOrder.phoneNumber || backendOrder.phone || backendOrder.number || backendOrder.phone_number || ''
       const nextOrder = {
-        id: data.order.id || `sms-${Date.now()}`,
-        country: selectedCountryMeta.label,
-        app: selectedProductMeta.name,
+        ...backendOrder,
+        _id: backendOrder._id || backendOrder.id || `sms-${Date.now()}`,
+        country: backendOrder.country || selectedCountryMeta.label,
+        app: backendOrder.app || selectedProductMeta.name,
         phoneNumber: normalizedPhoneNumber,
-        expiresAt: data.order.expiresAt || Date.now() + 15 * 60 * 1000,
-        code: data.order.statusCode || 'PENDING',
-        status: data.order.status || 'Waiting for SMS OTP code...',
-        price: data.order.price || localizedPrice,
+        expiresAt: backendOrder.expiresAt || Date.now() + 15 * 60 * 1000,
+        order_status: backendOrder.order_status || backendOrder.status || 'In Progress',
+        status_message: backendOrder.status_message || backendOrder.status || 'Waiting for SMS OTP code...',
+        price: backendOrder.price || localizedPrice,
+        currency_used: backendOrder.currency_used || currency,
       }
 
       setOrders((prev) => [nextOrder, ...prev].slice(0, 6))

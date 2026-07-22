@@ -2,6 +2,7 @@ import { Router } from 'express'
 import axios from 'axios'
 import { FIVE_SIM_API_URL, FIVE_SIM_API_KEY, PROVIDER_OPERATOR, USE_REAL_PROVIDER } from '../config/index.js'
 import { getAllPhoneNumberPriceOverrides, getCustomPhoneNumberPrice, savePhoneNumberPriceOverrides } from '../config/phoneNumberPricing.js'
+import { providerCancelOrder, providerFinishOrder } from '../services/providerClient.js'
 import { User, PhoneNumberOrder } from '../models/index.js'
 
 const router = Router()
@@ -180,6 +181,10 @@ router.post('/sms/buy-number', async (req, res) => {
   try {
     const { country = 'any', product, currency = 'GHS', user_id, price } = req.body || {}
 
+    if (!user_id) {
+      return res.status(400).json({ error: 'user_id is required to place a phone number order.' })
+    }
+
     if (!USE_REAL_PROVIDER) {
       return res.status(503).json({ error: 'Provider integration disabled. Set USE_REAL_PROVIDER=true to enable real purchases.' })
     }
@@ -247,7 +252,12 @@ router.post('/sms/buy-number', async (req, res) => {
 
     return res.status(provResp.status || 502).json({ error: 'Provider buy failed', detail: provResp.data })
   } catch (error) {
-    console.error('[5sim] buy-number failed', error.message)
+    console.error('[5sim] buy-number failed', {
+      message: error.message,
+      body: req.body,
+      status: error.response?.status,
+      data: error.response?.data,
+    })
     res.status(502).json({ error: 'Unable to create the SMS activation request right now.', detail: error.message })
   }
 })
@@ -283,8 +293,17 @@ router.post('/sms/orders/:id/complete', async (req, res) => {
     if (['Completed', 'Canceled'].includes(order.order_status)) {
       return res.status(400).json({ error: 'Order cannot be completed' })
     }
+    if (!order.provider_order_id) {
+      return res.status(500).json({ error: 'Provider order id missing for this order' })
+    }
+
+    const providerResult = await providerFinishOrder(order.provider_order_id)
+    if (!providerResult?.ok) {
+      return res.status(502).json({ error: 'Unable to finalize order with provider', detail: providerResult?.error || providerResult?.data || 'provider error' })
+    }
 
     order.order_status = 'Completed'
+    order.status_message = 'Order completed by user'
     order.updated_at = new Date()
     await order.save()
 
@@ -305,6 +324,14 @@ router.post('/sms/orders/:id/cancel', async (req, res) => {
     if (!order) return res.status(404).json({ error: 'Order not found' })
     if (['Canceled', 'Completed'].includes(order.order_status)) {
       return res.status(400).json({ error: 'Order cannot be canceled' })
+    }
+    if (!order.provider_order_id) {
+      return res.status(500).json({ error: 'Provider order id missing for this order' })
+    }
+
+    const providerResult = await providerCancelOrder(order.provider_order_id)
+    if (!providerResult?.ok) {
+      return res.status(502).json({ error: 'Unable to cancel order with provider', detail: providerResult?.error || providerResult?.data || 'provider error' })
     }
 
     const refund = Number(order.price || 0)
