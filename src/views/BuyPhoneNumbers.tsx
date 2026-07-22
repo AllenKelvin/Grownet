@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   CheckCircle2,
   Copy,
+  History,
   Loader2,
   MessageCircleMore,
   MessageSquareText,
@@ -11,8 +12,9 @@ import {
   Star,
   TimerReset,
 } from 'lucide-react'
-import { PageHeader } from '../components/ui'
+import { PageHeader, StatusBadge } from '../components/ui'
 import { formatMoney } from '../lib/currency'
+import { api } from '../lib/api'
 
 const apiBase = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '')
 
@@ -119,6 +121,64 @@ export default function BuyPhoneNumbers({ user, onUserUpdated }: any) {
   const [activeModal, setActiveModal] = useState<any | null>(null)
   const [copied, setCopied] = useState(false)
   const [feedback, setFeedback] = useState('')
+  const [loadingOrders, setLoadingOrders] = useState(false)
+
+  const loadPhoneOrders = async () => {
+    setLoadingOrders(true)
+    try {
+      const data = await api.listSmsOrders(user?._id)
+      if (data?.ok && Array.isArray(data.orders)) {
+        setOrders(data.orders)
+      }
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setLoadingOrders(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!user?._id) return
+    loadPhoneOrders()
+    const interval = window.setInterval(loadPhoneOrders, 15000)
+    return () => window.clearInterval(interval)
+  }, [user?._id])
+
+  const activePhoneOrders = orders.filter((order) => !['Completed', 'Canceled'].includes(order.order_status))
+  const phoneOrderHistory = orders.filter((order) => ['Completed', 'Canceled', 'Partial'].includes(order.order_status))
+
+  const handleCompletePhoneOrder = async (orderId: string) => {
+    if (!orderId) return
+    setFeedback('')
+    try {
+      const data = await api.completeSmsOrder(orderId, user?._id)
+      if (data?.ok) {
+        setOrders((prev) => prev.map((order) => (String(order._id) === String(orderId) ? data.order : order)))
+        await onUserUpdated?.()
+      }
+    } catch (error) {
+      console.error(error)
+      setFeedback('Unable to complete the order. Please try again.')
+    }
+  }
+
+  const handleCancelPhoneOrder = async (orderId: string) => {
+    if (!orderId) return
+    setFeedback('')
+    try {
+      const data = await api.cancelSmsOrder(orderId, user?._id)
+      if (data?.ok) {
+        setOrders((prev) => prev.map((order) => (String(order._id) === String(orderId) ? data.order : order)))
+        if (typeof data.wallet_balance === 'number') {
+          setWalletBalance(data.wallet_balance)
+        }
+        await onUserUpdated?.()
+      }
+    } catch (error) {
+      console.error(error)
+      setFeedback('Unable to cancel the order. Please try again.')
+    }
+  }
 
   useEffect(() => {
     setWalletBalance(user?.wallet_balance || 0)
@@ -260,6 +320,7 @@ export default function BuyPhoneNumbers({ user, onUserUpdated }: any) {
       if (typeof onUserUpdated === 'function') {
         await onUserUpdated()
       }
+      await loadPhoneOrders()
     } catch (error) {
       console.error(error)
       setFeedback('The activation request could not be created. Please try again.')
@@ -444,92 +505,154 @@ export default function BuyPhoneNumbers({ user, onUserUpdated }: any) {
           </div>
         </div>
 
-        <div className="card p-5">
-          <div className="mb-4 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <MessageSquareText size={16} className="text-accent-400" />
-              <h2 className="text-sm font-semibold text-white">Your Virtual Numbers Log</h2>
+        <div className="space-y-4">
+          <div className="card p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <MessageSquareText size={16} className="text-accent-400" />
+                <h2 className="text-sm font-semibold text-white">Active Orders</h2>
+              </div>
+              <span className="rounded-full bg-ink-800 px-2.5 py-1 text-[11px] uppercase tracking-[0.2em] text-slate-500">
+                {activePhoneOrders.length} active
+              </span>
             </div>
-            <span className="rounded-full bg-ink-800 px-2.5 py-1 text-[11px] uppercase tracking-[0.2em] text-slate-500">
-              {orders.length} active
-            </span>
-          </div>
 
-          <div className="overflow-hidden rounded-2xl border border-ink-700">
-            <div className="hidden md:block">
-              <table className="min-w-full divide-y divide-ink-700 text-sm">
-                <thead className="bg-ink-850 text-left text-xs uppercase tracking-[0.2em] text-slate-500">
-                  <tr>
-                    <th className="px-3 py-3">Country</th>
-                    <th className="px-3 py-3">App</th>
-                    <th className="px-3 py-3">Phone</th>
-                    <th className="px-3 py-3">Timer</th>
-                    <th className="px-3 py-3">Code</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-ink-800 bg-ink-900/70">
-                  {orders.map((order) => {
-                    const remaining = order.expiresAt - now
-                    return (
-                      <tr key={order.id} className="align-middle">
-                        <td className="px-3 py-3 text-slate-300">{order.country}</td>
-                        <td className="px-3 py-3 text-slate-300">{order.app}</td>
-                        <td className="px-3 py-3 text-slate-300">{order.phoneNumber}</td>
-                        <td className="px-3 py-3">
-                          <div className="flex items-center gap-2 text-amber-400">
-                            <TimerReset size={14} className="animate-pulse" />
-                            <span>{formatCountdown(remaining)}</span>
-                          </div>
-                        </td>
-                        <td className="px-3 py-3">
-                          <div className="space-y-1">
-                            <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-400">
-                              {order.code}
-                            </div>
-                            <div className="flex items-center gap-2 text-xs text-slate-400">
-                              <Loader2 size={12} className="animate-spin text-amber-400" />
-                              <span>{order.status}</span>
-                            </div>
-                          </div>
-                        </td>
+            {loadingOrders ? (
+              <div className="rounded-2xl border border-ink-700 bg-ink-850/70 p-4 text-sm text-slate-400">Loading active orders…</div>
+            ) : activePhoneOrders.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-ink-700 bg-ink-850/60 p-4 text-sm text-slate-500">
+                No active phone number orders yet. Place a request to start tracking your numbers.
+              </div>
+            ) : (
+              <div className="overflow-hidden rounded-2xl border border-ink-700">
+                <div className="hidden md:block">
+                  <table className="min-w-full divide-y divide-ink-700 text-sm">
+                    <thead className="bg-ink-850 text-left text-xs uppercase tracking-[0.2em] text-slate-500">
+                      <tr>
+                        <th className="px-3 py-3">Phone</th>
+                        <th className="px-3 py-3">Service</th>
+                        <th className="px-3 py-3">Status</th>
+                        <th className="px-3 py-3 text-right">Price</th>
+                        <th className="px-3 py-3 text-right">Actions</th>
                       </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-            <div className="space-y-2 bg-ink-900/70 p-2 md:hidden">
-              {orders.map((order) => {
-                const remaining = order.expiresAt - now
-                return (
-                  <div key={order.id} className="rounded-2xl border border-ink-700 bg-ink-850/80 p-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold text-white">{order.app}</p>
-                        <p className="mt-1 text-xs text-slate-500">{order.country}</p>
+                    </thead>
+                    <tbody className="divide-y divide-ink-800 bg-ink-900/70">
+                      {activePhoneOrders.map((order) => (
+                        <tr key={order._id} className="align-middle">
+                          <td className="px-3 py-3 text-slate-300 font-mono">{order.phoneNumber || '—'}</td>
+                          <td className="px-3 py-3 text-slate-300">
+                            <div>{order.app}</div>
+                            <div className="text-xs text-slate-500">{order.country}</div>
+                          </td>
+                          <td className="px-3 py-3"><StatusBadge status={order.order_status} /></td>
+                          <td className="px-3 py-3 text-right text-slate-200">{formatMoney(order.price, order.currency_used)}</td>
+                          <td className="px-3 py-3 text-right">
+                            <div className="flex flex-wrap justify-end gap-2">
+                              <button
+                                onClick={() => handleCompletePhoneOrder(order._id)}
+                                className="btn-ghost rounded-full border border-slate-700 bg-slate-900/80 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-800"
+                              >
+                                Complete
+                              </button>
+                              <button
+                                onClick={() => handleCancelPhoneOrder(order._id)}
+                                className="btn-ghost rounded-full border border-rose-500/20 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-300 hover:bg-rose-500/15"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="space-y-3 bg-ink-900/70 p-3 md:hidden">
+                  {activePhoneOrders.map((order) => (
+                    <div key={order._id} className="rounded-2xl border border-ink-700 bg-ink-850/80 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="font-semibold text-slate-200">{order.phoneNumber || '—'}</p>
+                        <StatusBadge status={order.order_status} />
                       </div>
-                      <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-400">
-                        {order.code}
+                      <p className="mt-2 text-xs text-slate-400">{order.app} • {order.country}</p>
+                      <p className="mt-2 text-xs text-slate-400">{order.status_message || 'Waiting for SMS OTP code...'}</p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <button
+                          onClick={() => handleCompletePhoneOrder(order._id)}
+                          className="btn-ghost rounded-full border border-slate-700 bg-slate-900/80 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-800"
+                        >
+                          Complete
+                        </button>
+                        <button
+                          onClick={() => handleCancelPhoneOrder(order._id)}
+                          className="btn-ghost rounded-full border border-rose-500/20 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-300 hover:bg-rose-500/15"
+                        >
+                          Cancel
+                        </button>
                       </div>
                     </div>
-                    <p className="mt-2 break-all text-sm text-slate-300">{order.phoneNumber}</p>
-                    <div className="mt-3 flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2 text-amber-400">
-                        <TimerReset size={14} className="animate-pulse" />
-                        <span>{formatCountdown(remaining)}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-slate-400">
-                        <Loader2 size={12} className="animate-spin text-amber-400" />
-                        <span>{order.status}</span>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
-          <div className="mt-4 rounded-2xl border border-ink-700 bg-ink-850/70 p-4 text-sm text-slate-400">
+          <div className="card p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <History size={16} className="text-accent-400" />
+                <h2 className="text-sm font-semibold text-white">Order History</h2>
+              </div>
+              <span className="rounded-full bg-ink-800 px-2.5 py-1 text-[11px] uppercase tracking-[0.2em] text-slate-500">
+                {phoneOrderHistory.length} records
+              </span>
+            </div>
+
+            {phoneOrderHistory.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-ink-700 bg-ink-850/60 p-4 text-sm text-slate-500">
+                No historical phone orders yet. Completed or canceled orders appear here.
+              </div>
+            ) : (
+              <div className="overflow-hidden rounded-2xl border border-ink-700">
+                <div className="hidden md:block">
+                  <table className="min-w-full divide-y divide-ink-700 text-sm">
+                    <thead className="bg-ink-850 text-left text-xs uppercase tracking-[0.2em] text-slate-500">
+                      <tr>
+                        <th className="px-3 py-3">Phone</th>
+                        <th className="px-3 py-3">Status</th>
+                        <th className="px-3 py-3 text-right">Price</th>
+                        <th className="px-3 py-3 text-right">Updated</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-ink-800 bg-ink-900/70">
+                      {phoneOrderHistory.map((order) => (
+                        <tr key={order._id} className="align-middle">
+                          <td className="px-3 py-3 text-slate-300 font-mono">{order.phoneNumber || '—'}</td>
+                          <td className="px-3 py-3"><StatusBadge status={order.order_status} /></td>
+                          <td className="px-3 py-3 text-right text-slate-200">{formatMoney(order.price, order.currency_used)}</td>
+                          <td className="px-3 py-3 text-right text-slate-400">{order.updated_at ? new Date(order.updated_at).toLocaleString() : '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="space-y-3 bg-ink-900/70 p-3 md:hidden">
+                  {phoneOrderHistory.map((order) => (
+                    <div key={order._id} className="rounded-2xl border border-ink-700 bg-ink-850/80 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="font-semibold text-slate-200">{order.phoneNumber || '—'}</p>
+                        <StatusBadge status={order.order_status} />
+                      </div>
+                      <p className="mt-2 text-xs text-slate-400">{order.app} • {order.country}</p>
+                      <p className="mt-2 text-xs text-slate-400">Updated {order.updated_at ? new Date(order.updated_at).toLocaleString() : '—'}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-2xl border border-ink-700 bg-ink-850/70 p-4 text-sm text-slate-400">
             <div className="flex items-center justify-between">
               <span>Current balance</span>
               <span className="font-semibold text-brand-400">

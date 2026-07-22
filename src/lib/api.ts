@@ -77,4 +77,9 @@ export const api = {
   // phone number pricing overrides
   getPhoneNumberPriceOverrides: () => request('/sms/pricing-overrides'),
   updatePhoneNumberPriceOverrides: (body) => request('/sms/pricing-overrides', { method: 'PUT', body: JSON.stringify(body) }),
+
+  // phone number orders
+  listSmsOrders: (userId) => request(`/sms/orders?user_id=${encodeURIComponent(userId)}`),
+  completeSmsOrder: (id, userId) => request(`/sms/orders/${id}/complete`, { method: 'POST', body: JSON.stringify({ user_id: userId }) }),
+  cancelSmsOrder: (id, userId) => request(`/sms/orders/${id}/cancel`, { method: 'POST', body: JSON.stringify({ user_id: userId }) }),
 }

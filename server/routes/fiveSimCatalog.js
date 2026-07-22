@@ -2,7 +2,7 @@ import { Router } from 'express'
 import axios from 'axios'
 import { FIVE_SIM_API_URL, FIVE_SIM_API_KEY, PROVIDER_OPERATOR, USE_REAL_PROVIDER } from '../config/index.js'
 import { getAllPhoneNumberPriceOverrides, getCustomPhoneNumberPrice, savePhoneNumberPriceOverrides } from '../config/phoneNumberPricing.js'
-import { User } from '../models/index.js'
+import { User, PhoneNumberOrder } from '../models/index.js'
 
 const router = Router()
 const FIVE_SIM_BASE = String(FIVE_SIM_API_URL || 'https://5sim.net/v1').replace(/\/+$/, '')
@@ -194,6 +194,13 @@ router.post('/sms/buy-number', async (req, res) => {
     if (provResp.status === 200) {
       const orderData = provResp.data || {}
       const normalizedPhone = orderData.phoneNumber || orderData.phone || orderData.number || orderData.phone_number || ''
+      const providerOrderId = orderData.id || orderData.order || orderData.order_id || orderData.orderId || ''
+      const statusMessage = String(orderData.status || orderData.statusCode || 'Waiting for SMS OTP code...')
+      const smsMessages = []
+      if (Array.isArray(orderData.sms)) smsMessages.push(...orderData.sms.map((item) => String(item).trim()).filter(Boolean))
+      if (Array.isArray(orderData.messages)) smsMessages.push(...orderData.messages.map((item) => String(item).trim()).filter(Boolean))
+      if (orderData.code) smsMessages.push(String(orderData.code).trim())
+      if (orderData.otp) smsMessages.push(String(orderData.otp).trim())
       const normalizedOrder = { ...orderData, phoneNumber: normalizedPhone }
       const chargeAmount = Number(price || product?.price || 0)
       if (user_id) {
@@ -207,8 +214,28 @@ router.post('/sms/buy-number', async (req, res) => {
           return res.status(402).json({ error: 'Insufficient wallet balance', required: chargeAmount, available: userBalance })
         }
 
+        const savedOrder = await PhoneNumberOrder.create({
+          user_id,
+          country: String(country || ''),
+          app: String(req.body.productName || ''),
+          phone_number: normalizedPhone,
+          provider_order_id: providerOrderId,
+          order_status: 'In Progress',
+          status_message: statusMessage,
+          sms_messages: smsMessages,
+          price: chargeAmount,
+          currency_used: String(currency || 'GHS'),
+          expires_at: new Date(Date.now() + 15 * 60 * 1000),
+        })
+
+        const responseOrder = {
+          ...savedOrder.toObject(),
+          phoneNumber: normalizedPhone,
+          expiresAt: savedOrder.expires_at,
+        }
+
         const updatedUser = await User.findByIdAndUpdate(user_id, { $inc: { wallet_balance: -chargeAmount } }, { new: true })
-        return res.json({ ok: true, order: normalizedOrder, wallet_balance: updatedUser?.wallet_balance ?? userBalance })
+        return res.json({ ok: true, order: responseOrder, wallet_balance: updatedUser?.wallet_balance ?? userBalance })
       }
 
       return res.json({ ok: true, order: normalizedOrder })
@@ -222,6 +249,76 @@ router.post('/sms/buy-number', async (req, res) => {
   } catch (error) {
     console.error('[5sim] buy-number failed', error.message)
     res.status(502).json({ error: 'Unable to create the SMS activation request right now.', detail: error.message })
+  }
+})
+
+router.get('/sms/orders', async (req, res) => {
+  try {
+    const { user_id } = req.query
+    if (!user_id) return res.status(400).json({ error: 'user_id is required' })
+    const orders = await PhoneNumberOrder.find({ user_id })
+      .sort({ created_at: -1 })
+      .lean()
+
+    const formatted = orders.map((order) => ({
+      ...order,
+      phoneNumber: order.phone_number,
+      expiresAt: order.expires_at,
+    }))
+    res.json({ ok: true, orders: formatted })
+  } catch (error) {
+    console.error('[5sim] list phone orders failed', error.message)
+    res.status(500).json({ error: 'Unable to load phone number orders right now.' })
+  }
+})
+
+router.post('/sms/orders/:id/complete', async (req, res) => {
+  try {
+    const { id } = req.params
+    const { user_id } = req.body || {}
+    if (!user_id) return res.status(400).json({ error: 'user_id is required' })
+
+    const order = await PhoneNumberOrder.findOne({ _id: id, user_id })
+    if (!order) return res.status(404).json({ error: 'Order not found' })
+    if (['Completed', 'Canceled'].includes(order.order_status)) {
+      return res.status(400).json({ error: 'Order cannot be completed' })
+    }
+
+    order.order_status = 'Completed'
+    order.updated_at = new Date()
+    await order.save()
+
+    res.json({ ok: true, order: { ...order.toObject(), phoneNumber: order.phone_number, expiresAt: order.expires_at } })
+  } catch (error) {
+    console.error('[5sim] complete phone order failed', error.message)
+    res.status(500).json({ error: 'Unable to complete order right now.' })
+  }
+})
+
+router.post('/sms/orders/:id/cancel', async (req, res) => {
+  try {
+    const { id } = req.params
+    const { user_id } = req.body || {}
+    if (!user_id) return res.status(400).json({ error: 'user_id is required' })
+
+    const order = await PhoneNumberOrder.findOne({ _id: id, user_id })
+    if (!order) return res.status(404).json({ error: 'Order not found' })
+    if (['Canceled', 'Completed'].includes(order.order_status)) {
+      return res.status(400).json({ error: 'Order cannot be canceled' })
+    }
+
+    const refund = Number(order.price || 0)
+    order.order_status = 'Canceled'
+    order.status_message = 'Order canceled by user'
+    order.updated_at = new Date()
+    await order.save()
+
+    const updatedUser = await User.findByIdAndUpdate(user_id, { $inc: { wallet_balance: refund } }, { new: true })
+
+    res.json({ ok: true, order: { ...order.toObject(), phoneNumber: order.phone_number, expiresAt: order.expires_at }, wallet_balance: updatedUser?.wallet_balance ?? 0 })
+  } catch (error) {
+    console.error('[5sim] cancel phone order failed', error.message)
+    res.status(500).json({ error: 'Unable to cancel order right now.' })
   }
 })
 

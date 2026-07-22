@@ -70,6 +70,24 @@ export const Order = mongoose.model('Order', orderSchema)
 export const Deposit = mongoose.model('Deposit', depositSchema)
 export const DataOrder = mongoose.model('DataOrder', dataOrderSchema)
 
+const phoneNumberOrderSchema = new mongoose.Schema({
+  user_id: { type: mongoose.Schema.Types.Mixed, required: true },
+  country: { type: String, required: true },
+  app: { type: String, required: true },
+  phone_number: { type: String, default: '' },
+  provider_order_id: { type: String, default: null },
+  order_status: { type: String, default: 'Pending' },
+  status_message: { type: String, default: 'Waiting for SMS OTP code...' },
+  sms_messages: { type: [String], default: [] },
+  price: { type: Number, required: true },
+  currency_used: { type: String, required: true },
+  expires_at: { type: Date, default: null },
+  created_at: { type: Date, default: Date.now },
+  updated_at: { type: Date, default: Date.now },
+})
+
+export const PhoneNumberOrder = mongoose.model('PhoneNumberOrder', phoneNumberOrderSchema)
+
 const dataPackageSchema = new mongoose.Schema({
   network: { type: String, required: true },
   name: { type: String, required: true },
