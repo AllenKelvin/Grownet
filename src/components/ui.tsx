@@ -2,15 +2,14 @@ import { CheckCircle2, Clock, Loader2, AlertCircle, XCircle, Settings } from 'lu
 import { useState } from 'react'
 
 export function StatusBadge({ status }: any) {
-  const [spinning, setSpinning] = useState(false)
   const s = String(status || '').toLowerCase()
 
   if (s === 'pending') {
     return (
-      <button onClick={() => { setSpinning(true); setTimeout(() => setSpinning(false), 1200) }} className={`badge flex items-center gap-2 bg-amber-500/10 text-amber-400 border border-amber-500/20`}>
-        <Clock size={12} className={spinning ? 'animate-spin' : ''} />
+      <span className={`badge flex items-center gap-2 bg-amber-500/10 text-amber-400 border border-amber-500/20`}>
+        <Clock size={12} className="animate-spin" />
         Pending
-      </button>
+      </span>
     )
   }
 

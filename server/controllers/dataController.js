@@ -134,6 +134,7 @@ export async function createAllenDataHubPurchase(req, res) {
       package_description: 'Purchased via AllenDataHub API',
       price_local: price,
       currency_used: currency,
+      provider_order_id: response?.order?.id || null,
       order_status: response?.order?.status || 'pending',
     })
 

@@ -4,8 +4,9 @@
 // state. On 'Completed' -> update local. On 'Canceled'/'Partial' -> compute
 // remaining undelivered units and refund the user's wallet instantly.
 
-import { Order, User } from '../models/index.js'
+import { Order, User, DataOrder } from '../models/index.js'
 import { providerCheckStatus } from '../services/providerClient.js'
+import { fetchAllenDataHubOrderStatus } from '../utils/allendatahub.js'
 import { computeRefund } from '../utils/exchange.js'
 import { CRON_INTERVAL_MS } from '../config/index.js'
 
@@ -27,9 +28,14 @@ export function stopStatusCron() {
 async function runPoll() {
   try {
     const openOrders = await Order.find({ order_status: 'In Progress' })
-    if (openOrders.length === 0) return
+    const openDataOrders = await DataOrder.find({
+      order_status: { $regex: /^(pending|in progress|processing)$/i },
+      provider_order_id: { $ne: null },
+    })
 
-    console.log(`[cron] polling ${openOrders.length} open order(s)...`)
+    if (openOrders.length === 0 && openDataOrders.length === 0) return
+
+    console.log(`[cron] polling ${openOrders.length} open service order(s) and ${openDataOrders.length} open data order(s)...`)
 
     for (const order of openOrders) {
       if (!order.provider_order_id) continue
@@ -38,6 +44,16 @@ async function runPoll() {
         await applyStatusUpdate(order, status)
       } catch (err) {
         console.warn(`[cron] status check failed for ${order._id}:`, err.message)
+      }
+    }
+
+    for (const order of openDataOrders) {
+      if (!order.provider_order_id) continue
+      try {
+        const status = await fetchAllenDataHubOrderStatus(order.provider_order_id)
+        await applyDataOrderStatusUpdate(order, status)
+      } catch (err) {
+        console.warn(`[cron] data order status check failed for ${order._id}:`, err.message)
       }
     }
   } catch (err) {
@@ -101,4 +117,25 @@ async function applyStatusUpdate(order, providerStatus) {
       updated_at: new Date().toISOString(),
     },
   })
+}
+
+async function applyDataOrderStatusUpdate(order, remoteOrder) {
+  const upstream = String(remoteOrder?.status || '').toLowerCase()
+  const updates = { updated_at: new Date().toISOString() }
+
+  if (upstream === 'completed' || upstream === 'delivered') {
+    updates.order_status = 'Completed'
+  } else if (upstream === 'canceled' || upstream === 'cancel' || upstream === 'failed' || upstream === 'failed_payment') {
+    updates.order_status = 'Canceled'
+  } else if (upstream === 'partial') {
+    updates.order_status = 'Partial'
+  } else if (upstream === 'processing' || upstream === 'in progress') {
+    updates.order_status = 'In Progress'
+  } else if (upstream === 'pending') {
+    updates.order_status = 'pending'
+  } else if (upstream) {
+    updates.order_status = remoteOrder.status
+  }
+
+  await DataOrder.findByIdAndUpdate(order._id, updates)
 }

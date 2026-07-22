@@ -70,6 +70,8 @@ export default function BuyData({ user, onUserUpdated }: any) {
   const [selectedVolume, setSelectedVolume] = useState<number>(1)
 
   useEffect(() => {
+    let interval: NodeJS.Timeout | null = null
+
     ;(async () => {
       try {
         const allendataPackages = await api.listAllenDataHubProducts()
@@ -89,8 +91,13 @@ export default function BuyData({ user, onUserUpdated }: any) {
         setLoading(false)
       }
     })()
+
     loadHistory()
-  }, [])
+    interval = setInterval(loadHistory, 15000)
+    return () => {
+      if (interval) clearInterval(interval)
+    }
+  }, [user._id])
 
   const loadHistory = async () => {
     try {

@@ -120,6 +120,11 @@ export async function fetchAllenDataHubProducts(apiKey = ALLENDATAHUB_API_KEY, b
   }
 }
 
+export async function fetchAllenDataHubOrderStatus(orderId, apiKey = ALLENDATAHUB_API_KEY, baseUrl = ALLENDATAHUB_BASE_URL) {
+  const data = await requestAllenDataHub(`/api/v1/orders/${encodeURIComponent(String(orderId))}`, { apiKey, baseUrl, method: 'GET' })
+  return data?.order || data
+}
+
 export async function purchaseAllenDataHubOrder({ network, volume, phoneNumber, webhookUrl, apiKey = ALLENDATAHUB_API_KEY, baseUrl = ALLENDATAHUB_BASE_URL }) {
   const payload = {
     network,

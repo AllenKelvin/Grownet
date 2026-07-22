@@ -58,6 +58,7 @@ const dataOrderSchema = new mongoose.Schema({
   package_description: { type: String, default: '' },
   price_local: { type: Number, required: true },
   currency_used: { type: String, required: true },
+  provider_order_id: { type: String, default: null },
   order_status: { type: String, default: 'pending' },
   created_at: { type: Date, default: Date.now },
   updated_at: { type: Date, default: Date.now },

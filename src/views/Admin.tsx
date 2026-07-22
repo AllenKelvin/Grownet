@@ -3,8 +3,8 @@ import { api } from '../lib/api'
 import { PageHeader, Spinner, EmptyState, StatusBadge } from '../components/ui'
 import { RefreshCw, PlusSquare, Users, Package, FileText, Phone, Trash2, Save, ShieldCheck, Wallet, ShoppingCart } from 'lucide-react'
 
-export default function Admin({ user }: any) {
-  const [tab, setTab] = useState('users')
+export default function Admin({ user, activeTab, onAdminTabChange }: any) {
+  const [tab, setTab] = useState(activeTab || 'users')
   const [loading, setLoading] = useState(false)
 
   const [users, setUsers] = useState<any[]>([])
@@ -28,6 +28,12 @@ export default function Admin({ user }: any) {
   }, [])
 
   useEffect(() => {
+    if (activeTab) {
+      setTab(activeTab)
+    }
+  }, [activeTab])
+
+  useEffect(() => {
     if (tab === 'pricing') {
       loadPricingOverrides()
     }
@@ -35,6 +41,13 @@ export default function Admin({ user }: any) {
       loadDataPackages()
     }
   }, [tab])
+
+  function setTabAndNotify(nextTab: string) {
+    setTab(nextTab)
+    if (typeof onAdminTabChange === 'function') {
+      onAdminTabChange(nextTab)
+    }
+  }
 
   async function fetchAll() {
     setLoading(true)
@@ -234,12 +247,12 @@ export default function Admin({ user }: any) {
       />
 
           <div className="mb-6 flex flex-wrap items-center gap-3">
-            <Tab label="Users" id="users" icon={Users} active={tab === 'users'} onClick={() => setTab('users')} />
-            <Tab label="Orders" id="orders" icon={ShoppingCart} active={tab === 'orders'} onClick={() => setTab('orders')} />
-            <Tab label="Phone Pricing" id="pricing" icon={Phone} active={tab === 'pricing'} onClick={() => setTab('pricing')} />
-            <Tab label="Data Pricing" id="data-pricing" icon={Wallet} active={tab === 'data-pricing'} onClick={() => setTab('data-pricing')} />
-            <Tab label="Create Service" id="create" icon={PlusSquare} active={tab === 'create'} onClick={() => setTab('create')} />
-            <Tab label="Create Data Package" id="create-data" icon={ShieldCheck} active={tab === 'create-data'} onClick={() => setTab('create-data')} />
+            <Tab label="Users" id="users" icon={Users} active={tab === 'users'} onClick={() => setTabAndNotify('users')} />
+            <Tab label="Orders" id="orders" icon={ShoppingCart} active={tab === 'orders'} onClick={() => setTabAndNotify('orders')} />
+            <Tab label="Phone Pricing" id="pricing" icon={Phone} active={tab === 'pricing'} onClick={() => setTabAndNotify('pricing')} />
+            <Tab label="Data Pricing" id="data-pricing" icon={Wallet} active={tab === 'data-pricing'} onClick={() => setTabAndNotify('data-pricing')} />
+            <Tab label="Create Service" id="create" icon={PlusSquare} active={tab === 'create'} onClick={() => setTabAndNotify('create')} />
+            <Tab label="Create Data Package" id="create-data" icon={ShieldCheck} active={tab === 'create-data'} onClick={() => setTabAndNotify('create-data')} />
           </div>
 
       {loading ? (

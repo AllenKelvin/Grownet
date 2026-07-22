@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, ShoppingCart, Layers, Wallet, History, Zap, Menu, X, UserCircle, FileText, Phone, Send } from 'lucide-react'
+import { LayoutDashboard, ShoppingCart, Layers, Wallet, History, Zap, Menu, X, UserCircle, FileText, Phone, Send, Users, PlusSquare, ShieldCheck } from 'lucide-react'
 import { api } from './lib/api'
 import AuthPage from './views/Auth'
 import Dashboard from './views/Dashboard'
@@ -19,6 +19,15 @@ const NAV = [
   { id: 'profile', label: 'Profile', icon: UserCircle },
 ]
 
+const ADMIN_NAV = [
+  { id: 'admin-users', label: 'Users', icon: Users },
+  { id: 'admin-orders', label: 'Orders', icon: FileText },
+  { id: 'admin-pricing', label: 'Phone Pricing', icon: Phone },
+  { id: 'admin-data-pricing', label: 'Data Pricing', icon: Wallet },
+  { id: 'admin-create', label: 'Create Service', icon: PlusSquare },
+  { id: 'admin-create-data', label: 'Create Data Package', icon: ShieldCheck },
+]
+
 const MOBILE_HIDDEN_IDS = ['wallet', 'profile']
 const MOBILE_QUICK_ITEMS = [
   { id: 'wallet', label: 'Wallet', icon: Wallet },
@@ -27,7 +36,7 @@ const MOBILE_QUICK_ITEMS = [
 
 export default function App() {
   const [active, setActive] = useState('dashboard')
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [loggedOut, setLoggedOut] = useState(false)
@@ -96,6 +105,11 @@ export default function App() {
   }
 
   const ActiveView = () => {
+    if (active === 'admin' || active.startsWith('admin-')) {
+      const tab = active === 'admin' ? 'users' : active.replace(/^admin-/, '')
+      return <Admin user={user} activeTab={tab} onAdminTabChange={(tabId: string) => setActive(`admin-${tabId}`)} />
+    }
+
     switch (active) {
       case 'dashboard': return <Dashboard user={user} onNavigate={setActive} />
       case 'buy-numbers': return <BuyPhoneNumbers user={user} onUserUpdated={refreshUser} />
@@ -107,12 +121,14 @@ export default function App() {
         setUser(null)
         localStorage.removeItem('grownet-user')
       }} />
-      case 'admin': return <Admin user={user} />
-      default: return <Dashboard user={user} onNavigate={setActive} />
     }
   }
 
+  const adminActive = user?.isAdmin && (active === 'admin' || active.startsWith('admin-'))
   const visibleNavItems = NAV.filter((item) => !isMobileView || !MOBILE_HIDDEN_IDS.includes(item.id))
+  const mainNavItems = user?.isAdmin ? [...visibleNavItems, { id: 'admin-users', label: 'Admin Console', icon: Layers }] : visibleNavItems
+  const sidebarItems = adminActive ? ADMIN_NAV : mainNavItems
+  const sidebarActiveId = active === 'admin' ? 'admin-users' : active
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-ink-950 text-slate-200">
@@ -157,9 +173,9 @@ export default function App() {
               <Brand />
             </div>
             <nav className="flex-1 space-y-1 px-3 md:py-4 py-16 overflow-y-auto">
-              {visibleNavItems.map((item) => {
+              {sidebarItems.map((item) => {
                 const Icon = item.icon
-                const isActive = active === item.id
+                const isActive = sidebarActiveId === item.id
                 return (
                   <button
                     key={item.id}
