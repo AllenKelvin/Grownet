@@ -67,7 +67,7 @@ export default function Dashboard({ user, onNavigate }) {
     <div>
       <PageHeader
         title={`Welcome back, ${user.name.split(' ')[0]}`}
-        subtitle="Your SMM reseller overview at a glance."
+        subtitle="Your complete activation service dashboard at a glance."
       />
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">

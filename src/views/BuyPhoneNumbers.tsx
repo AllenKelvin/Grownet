@@ -308,7 +308,8 @@ export default function BuyPhoneNumbers({ user, onUserUpdated }: any) {
         country: backendOrder.country || selectedCountryMeta.label,
         app: backendOrder.app || selectedProductMeta.name,
         phoneNumber: normalizedPhoneNumber,
-        expiresAt: backendOrder.expiresAt || Date.now() + 15 * 60 * 1000,
+        smsCode: backendOrder.smsCode || backendOrder.code || backendOrder.sms_code || '',
+        expiresAt: Math.max(Number(backendOrder.expiresAt) || Date.now() + 15 * 60 * 1000, Date.now() + 15 * 60 * 1000),
         order_status: backendOrder.order_status || backendOrder.status || 'In Progress',
         status_message: backendOrder.status_message || backendOrder.status || 'Waiting for SMS OTP code...',
         price: backendOrder.price || localizedPrice,
@@ -345,7 +346,7 @@ export default function BuyPhoneNumbers({ user, onUserUpdated }: any) {
     <div>
       <PageHeader
         title="Buy Phone Numbers"
-        subtitle="Browse live Grownet countries and current in-stock services, then place an activation request instantly."
+        subtitle="Browse live CloudNum countries and current in-stock services, then place an activation request instantly."
       />
 
       <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
@@ -682,6 +683,11 @@ export default function BuyPhoneNumbers({ user, onUserUpdated }: any) {
             <div className="mt-5 text-center">
               <p className="text-sm font-medium uppercase tracking-[0.25em] text-brand-400">Purchase successful</p>
               <h3 className="mt-2 text-2xl font-semibold text-white">{activeModal.phoneNumber}</h3>
+              {activeModal.smsCode && (
+                <p className="mt-2 text-sm text-slate-400">
+                  SMS Code: <span className="font-semibold text-emerald-400">{activeModal.smsCode}</span>
+                </p>
+              )}
               <div className="mt-3 flex items-center justify-center gap-2">
                 <button
                   onClick={handleCopy}
@@ -697,9 +703,9 @@ export default function BuyPhoneNumbers({ user, onUserUpdated }: any) {
             <div className="mt-6 rounded-2xl border border-ink-700 bg-ink-850/70 p-4 text-center">
               <div className="flex items-center justify-center gap-2 text-amber-400">
                 <TimerReset size={16} className="animate-pulse" />
-                <span className="text-3xl font-semibold tracking-[0.2em]">{formatCountdown(activeModal.expiresAt - now)}</span>
+                <span className="text-3xl font-semibold tracking-[0.2em]">{formatCountdown(Math.max(0, activeModal.expiresAt - now))}</span>
               </div>
-              <p className="mt-2 text-sm text-slate-400">15:00 minutes countdown</p>
+              <p className="mt-2 text-sm text-slate-400">Time remaining to receive SMS</p>
             </div>
 
             <div className="mt-5 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-center text-sm text-amber-300">

@@ -35,7 +35,10 @@ const MOBILE_QUICK_ITEMS = [
 ]
 
 export default function App() {
-  const [active, setActive] = useState('dashboard')
+  const [active, setActive] = useState(() => {
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('cloudnum-active-view') : null
+    return saved || 'dashboard'
+  })
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -43,6 +46,10 @@ export default function App() {
   const [authMode, setAuthMode] = useState('login')
   const [selectedService, setSelectedService] = useState<any>(null)
   const [isMobileView, setIsMobileView] = useState(() => typeof window !== 'undefined' ? window.innerWidth < 768 : false)
+
+  useEffect(() => {
+    localStorage.setItem('cloudnum-active-view', active)
+  }, [active])
 
   useEffect(() => {
     const saved = localStorage.getItem('grownet-user')
@@ -82,7 +89,7 @@ export default function App() {
       <div className="flex h-screen items-center justify-center bg-ink-950">
         <div className="flex flex-col items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-brand-500 pulse-glow" />
-          <p className="text-sm text-slate-400">Loading Grownet…</p>
+          <p className="text-sm text-slate-400">Loading CloudNum…</p>
         </div>
       </div>
     )
@@ -231,7 +238,7 @@ export default function App() {
         href="https://t.me/grownet09"
         target="_blank"
         rel="noreferrer"
-        aria-label="Join Grownet Telegram channel"
+        aria-label="Join CloudNum Telegram channel"
         className="fixed bottom-4 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#0088cc] text-white shadow-[0_12px_35px_rgba(0,136,204,0.35)] transition-transform hover:scale-105"
       >
         <Send size={22} />
@@ -247,7 +254,7 @@ function Brand() {
         <Zap size={18} fill="currentColor" />
       </div>
       <div>
-        <p className="text-sm font-bold tracking-tight text-white">Grownet</p>
+        <p className="text-sm font-bold tracking-tight text-white">CloudNum</p>
         <p className="text-[10px] uppercase tracking-widest text-slate-500">CENTER FOR ALL</p>
       </div>
     </div>
