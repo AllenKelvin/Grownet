@@ -24,7 +24,7 @@ export default function AuthPage({ mode, onModeChange, onAuthenticate, loggedOut
   const subtitle = isLogin
     ? 'Enter your email and password to sign in.'
     : isSignup
-    ? 'Create a new Grownet account to boost your social media platform.'
+    ? 'Create a new CloudNum account to get instant virtual numbers.'
     : 'Enter your email and we will send reset instructions.'
 
   const handleSubmit = async (event: any) => {
@@ -78,7 +78,7 @@ export default function AuthPage({ mode, onModeChange, onAuthenticate, loggedOut
         <div className="mb-8 flex flex-col gap-4 rounded-[32px] border border-ink-700 bg-ink-900/90 p-8 shadow-xl shadow-black/20">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm uppercase tracking-[0.35em] text-slate-500">Grownet</p>
+              <p className="text-sm uppercase tracking-[0.35em] text-slate-500">CloudNum</p>
               <h1 className="mt-3 text-3xl font-bold text-white">{title}</h1>
               <p className="mt-2 text-sm text-slate-400">{subtitle}</p>
             </div>
@@ -159,7 +159,7 @@ export default function AuthPage({ mode, onModeChange, onAuthenticate, loggedOut
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="hello@grownet.com"
+                placeholder="hello@cloudnum.org"
                 className="input pl-10"
               />
             </div>

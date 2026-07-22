@@ -580,7 +580,7 @@ export default function BuyPhoneNumbers({ user, onUserUpdated }: any) {
                             </div>
                           </td>
                         </tr>
-                      ))
+                      )}}
                     </tbody>
                   </table>
                 </div>
@@ -614,7 +614,7 @@ export default function BuyPhoneNumbers({ user, onUserUpdated }: any) {
                         </button>
                       </div>
                     </div>
-                  ))
+                  )}}
                 </div>
               </div>
             )}
@@ -686,7 +686,7 @@ export default function BuyPhoneNumbers({ user, onUserUpdated }: any) {
                       )}
                       <p className="mt-2 text-xs text-slate-400">Updated {order.updated_at ? new Date(order.updated_at).toLocaleString() : '—'}</p>
                     </div>
-                  ))
+                  )}}
                 </div>
               </div>
             )}
