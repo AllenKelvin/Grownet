@@ -104,7 +104,7 @@ export default function App() {
     )
   }
 
-  const ActiveView = () => {
+  const renderActiveView = () => {
     if (active === 'admin' || active.startsWith('admin-')) {
       const tab = active === 'admin' ? 'users' : active.replace(/^admin-/, '')
       return <Admin user={user} activeTab={tab} onAdminTabChange={(tabId: string) => setActive(`admin-${tabId}`)} />
@@ -222,7 +222,7 @@ export default function App() {
         {/* Main content */}
         <main className="flex-1 min-w-0 px-3 py-3 pb-24 sm:px-5 md:px-8 md:py-8 md:pb-8">
           <div className="mx-auto max-w-6xl animate-fade-in min-h-[calc(100dvh-5rem)] md:min-h-0">
-            <ActiveView />
+            {renderActiveView()}
           </div>
         </main>
       </div>
