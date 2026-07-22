@@ -82,3 +82,12 @@ const dataPackageSchema = new mongoose.Schema({
 })
 
 export const DataPackage = mongoose.model('DataPackage', dataPackageSchema)
+
+const phoneNumberPriceOverrideSchema = new mongoose.Schema({
+  key: { type: String, required: true, unique: true },
+  value: { type: Number, required: true },
+  created_at: { type: Date, default: Date.now },
+  updated_at: { type: Date, default: Date.now },
+})
+
+export const PhoneNumberPriceOverride = mongoose.model('PhoneNumberPriceOverride', phoneNumberPriceOverrideSchema)

@@ -117,14 +117,20 @@ async function fetchFiveSim(path) {
   return data
 }
 
-router.get('/sms/pricing-overrides', (_req, res) => {
-  res.json({ overrides: getAllPhoneNumberPriceOverrides() })
+router.get('/sms/pricing-overrides', async (_req, res) => {
+  try {
+    const overrides = await getAllPhoneNumberPriceOverrides()
+    res.json({ overrides })
+  } catch (error) {
+    console.error('[5sim] pricing overrides read failed', error.message)
+    res.status(500).json({ error: 'Unable to load phone-number pricing overrides.' })
+  }
 })
 
-router.put('/sms/pricing-overrides', (req, res) => {
+router.put('/sms/pricing-overrides', async (req, res) => {
   try {
     const { overrides } = req.body || {}
-    const saved = savePhoneNumberPriceOverrides(overrides)
+    const saved = await savePhoneNumberPriceOverrides(overrides)
     res.json({ ok: true, overrides: saved })
   } catch (error) {
     console.error('[5sim] pricing overrides failed', error.message)
@@ -151,18 +157,19 @@ router.get('/sms/products/:country', async (req, res) => {
   try {
     const { country } = req.params
     const data = await fetchFiveSim(`/guest/products/${encodeURIComponent(country)}/any`)
-    const products = normalizeProducts(data)
-      .filter((item) => item.qty > 0)
-      .map((item) => {
-        const basePrice = convertFiveSimPrice(item.price, 'GHS')
-        return {
-          ...item,
-          price: getCustomPhoneNumberPrice(item.name, country, basePrice),
-        }
-      })
-      .sort((a, b) => a.name.localeCompare(b.name))
+    const products = await Promise.all(
+      normalizeProducts(data)
+        .filter((item) => item.qty > 0)
+        .map(async (item) => {
+          const basePrice = convertFiveSimPrice(item.price, 'GHS')
+          return {
+            ...item,
+            price: await getCustomPhoneNumberPrice(item.name, country, basePrice),
+          }
+        }),
+    )
 
-    res.json({ products })
+    res.json({ products: products.sort((a, b) => a.name.localeCompare(b.name)) })
   } catch (error) {
     console.error('[5sim] products failed', error.message)
     res.status(502).json({ error: 'Unable to load 5sim products right now.' })

@@ -1,6 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { PhoneNumberPriceOverride } from '../models/index.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -55,18 +56,54 @@ function normalizeOverrides(overrides) {
   return normalized
 }
 
-export function getAllPhoneNumberPriceOverrides() {
+export async function getAllPhoneNumberPriceOverrides() {
+  if (process.env.SMS_PRICE_OVERRIDES) {
+    return normalizeOverrides(parseOverrides())
+  }
+
+  try {
+    const docs = await PhoneNumberPriceOverride.find({}).lean()
+    if (Array.isArray(docs) && docs.length > 0) {
+      const normalized = {}
+      docs.forEach((doc) => {
+        if (doc?.key && Number.isFinite(doc.value)) normalized[normalizeKey(doc.key)] = Number(doc.value)
+      })
+      return normalized
+    }
+  } catch (err) {
+    console.warn('[phoneNumberPricing] DB read failed', err.message)
+  }
+
   return normalizeOverrides(parseOverrides())
 }
 
-export function savePhoneNumberPriceOverrides(overrides) {
+export async function savePhoneNumberPriceOverrides(overrides) {
   const normalized = normalizeOverrides(overrides)
+
+  try {
+    const keys = Object.keys(normalized)
+    await Promise.all(keys.map((key) =>
+      PhoneNumberPriceOverride.findOneAndUpdate(
+        { key },
+        { key, value: normalized[key], updated_at: new Date() },
+        { upsert: true, new: true, setDefaultsOnInsert: true },
+      )
+    ))
+    if (keys.length > 0) {
+      await PhoneNumberPriceOverride.deleteMany({ key: { $nin: keys } })
+    } else {
+      await PhoneNumberPriceOverride.deleteMany({})
+    }
+  } catch (err) {
+    console.error('[phoneNumberPricing] DB save failed', err.message)
+  }
+
   fs.writeFileSync(overridesPath, JSON.stringify(normalized, null, 2) + '\n')
   return normalized
 }
 
-export function getCustomPhoneNumberPrice(productName, country = '', fallbackPrice = 0) {
-  const overrides = normalizeOverrides(parseOverrides())
+export async function getCustomPhoneNumberPrice(productName, country = '', fallbackPrice = 0) {
+  const overrides = await getAllPhoneNumberPriceOverrides()
   const normalizedCountry = normalizeKey(country)
   const normalizedProduct = normalizeKey(productName)
 

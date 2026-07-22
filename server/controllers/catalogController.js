@@ -139,8 +139,8 @@ function formatPhoneNumberPriceName(key = '') {
   return labels[normalized] || `${normalized || 'Phone number'} price`
 }
 
-function getPhoneNumberServiceEntries() {
-  const overrides = getAllPhoneNumberPriceOverrides()
+async function getPhoneNumberServiceEntries() {
+  const overrides = await getAllPhoneNumberPriceOverrides()
   const entries = Object.entries(overrides)
     .map(([key, value]) => ({
       key,
@@ -182,7 +182,7 @@ export async function listServices(req, res) {
   let services = await Service.find({}).sort({ local_service_id: 1 })
 
   if (!services.length) {
-    services = getPhoneNumberServiceEntries()
+    services = await getPhoneNumberServiceEntries()
   }
 
   if (!category || category === 'All') {
@@ -220,7 +220,7 @@ export async function listDataPackages(req, res) {
 // Sync services from phone-number pricing overrides so the DB reflects the active buy-phone-number catalog.
 export async function syncServices(req, res) {
   try {
-    const phoneServices = getPhoneNumberServiceEntries()
+    const phoneServices = await getPhoneNumberServiceEntries()
     await Service.deleteMany({})
 
     const created = []
