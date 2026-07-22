@@ -239,11 +239,12 @@ export default function BuyPhoneNumbers({ user, onUserUpdated }: any) {
         return
       }
 
+      const normalizedPhoneNumber = data.order.phoneNumber || data.order.phone || data.order.number || data.order.phone_number || ''
       const nextOrder = {
         id: data.order.id || `sms-${Date.now()}`,
         country: selectedCountryMeta.label,
         app: selectedProductMeta.name,
-        phoneNumber: data.order.phoneNumber,
+        phoneNumber: normalizedPhoneNumber,
         expiresAt: data.order.expiresAt || Date.now() + 15 * 60 * 1000,
         code: data.order.statusCode || 'PENDING',
         status: data.order.status || 'Waiting for SMS OTP code...',
@@ -251,6 +252,7 @@ export default function BuyPhoneNumbers({ user, onUserUpdated }: any) {
       }
 
       setOrders((prev) => [nextOrder, ...prev].slice(0, 6))
+      setActiveModal(nextOrder)
       const nextWalletBalance = typeof data.wallet_balance === 'number'
         ? data.wallet_balance
         : Math.max(walletBalance - (nextOrder.price || 0), 0)
@@ -258,7 +260,6 @@ export default function BuyPhoneNumbers({ user, onUserUpdated }: any) {
       if (typeof onUserUpdated === 'function') {
         await onUserUpdated()
       }
-      setActiveModal(nextOrder)
     } catch (error) {
       console.error(error)
       setFeedback('The activation request could not be created. Please try again.')

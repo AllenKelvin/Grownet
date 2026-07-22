@@ -192,6 +192,9 @@ router.post('/sms/buy-number', async (req, res) => {
     })
 
     if (provResp.status === 200) {
+      const orderData = provResp.data || {}
+      const normalizedPhone = orderData.phoneNumber || orderData.phone || orderData.number || orderData.phone_number || ''
+      const normalizedOrder = { ...orderData, phoneNumber: normalizedPhone }
       const chargeAmount = Number(price || product?.price || 0)
       if (user_id) {
         const user = await User.findById(user_id)
@@ -205,10 +208,10 @@ router.post('/sms/buy-number', async (req, res) => {
         }
 
         const updatedUser = await User.findByIdAndUpdate(user_id, { $inc: { wallet_balance: -chargeAmount } }, { new: true })
-        return res.json({ ok: true, order: provResp.data, wallet_balance: updatedUser?.wallet_balance ?? userBalance })
+        return res.json({ ok: true, order: normalizedOrder, wallet_balance: updatedUser?.wallet_balance ?? userBalance })
       }
 
-      return res.json({ ok: true, order: provResp.data })
+      return res.json({ ok: true, order: normalizedOrder })
     }
 
     if (provResp.status === 400 && provResp.data && String(JSON.stringify(provResp.data)).toLowerCase().includes('not enough')) {
