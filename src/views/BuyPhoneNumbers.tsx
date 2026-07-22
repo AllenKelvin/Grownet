@@ -580,7 +580,7 @@ export default function BuyPhoneNumbers({ user, onUserUpdated }: any) {
                             </div>
                           </td>
                         </tr>
-                      ))
+                      ))}
                     </tbody>
                   </table>
                 </div>
@@ -614,7 +614,7 @@ export default function BuyPhoneNumbers({ user, onUserUpdated }: any) {
                         </button>
                       </div>
                     </div>
-                  )}}
+                  ))}
                 </div>
               </div>
             )}
@@ -666,7 +666,7 @@ export default function BuyPhoneNumbers({ user, onUserUpdated }: any) {
                           <td className="px-3 py-3 text-right text-slate-200">{formatMoney(order.price, order.currency_used)}</td>
                           <td className="px-3 py-3 text-right text-slate-400">{order.updated_at ? new Date(order.updated_at).toLocaleString() : '—'}</td>
                         </tr>
-                      ))
+                      ))}
                     </tbody>
                   </table>
                 </div>
@@ -686,7 +686,7 @@ export default function BuyPhoneNumbers({ user, onUserUpdated }: any) {
                       )}
                       <p className="mt-2 text-xs text-slate-400">Updated {order.updated_at ? new Date(order.updated_at).toLocaleString() : '—'}</p>
                     </div>
-                  )}}
+                  ))}
                 </div>
               </div>
             )}
