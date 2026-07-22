@@ -7,6 +7,7 @@ export const providerType = PROVIDER_TYPE
 
 async function request(path: string, options: any = {}) {
   const res = await fetch(`${BASE}${path}`, {
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
     ...options,
   })
