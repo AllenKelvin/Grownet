@@ -9,7 +9,14 @@ import { connectDB } from './db/mongodb.js'
 
 const app = express()
 const PORT = Number(process.env.PORT || 4000)
-const FRONTEND_URLS = [process.env.FRONTEND_URL, process.env.CORS_ORIGIN, 'http://localhost:5173', 'http://127.0.0.1:5173'].filter(Boolean)
+const FRONTEND_URLS = [
+  process.env.FRONTEND_URL,
+  process.env.CORS_ORIGIN,
+  'https://cloudnum.org',
+  'www.cloudnum.org',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173'
+].filter(Boolean)
 
 app.use(cors({ origin: FRONTEND_URLS, credentials: true }))
 app.use(express.json())
@@ -22,7 +29,7 @@ async function boot() {
   await seedDatabase()
   startStatusCron()
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`[server] Grownet API running on http://0.0.0.0:${PORT}`)
+    console.log(`[server] CloudNum API running on http://0.0.0.0:${PORT}`)
   })
 }
 

@@ -4,6 +4,7 @@ import {
   Copy,
   History,
   Loader2,
+  Mail,
   MessageCircleMore,
   MessageSquareText,
   Search,
@@ -536,6 +537,7 @@ export default function BuyPhoneNumbers({ user, onUserUpdated }: any) {
                       <tr>
                         <th className="px-3 py-3">Phone</th>
                         <th className="px-3 py-3">Service</th>
+                        <th className="px-3 py-3">Code</th>
                         <th className="px-3 py-3">Status</th>
                         <th className="px-3 py-3 text-right">Price</th>
                         <th className="px-3 py-3 text-right">Actions</th>
@@ -548,6 +550,16 @@ export default function BuyPhoneNumbers({ user, onUserUpdated }: any) {
                           <td className="px-3 py-3 text-slate-300">
                             <div>{order.app}</div>
                             <div className="text-xs text-slate-500">{order.country}</div>
+                          </td>
+                          <td className="px-3 py-3 text-slate-300">
+                            {order.smsCode ? (
+                              <div className="flex items-center gap-2">
+                                <Mail size={14} className="text-emerald-400" />
+                                <span className="font-mono text-emerald-400">{order.smsCode}</span>
+                              </div>
+                            ) : (
+                              <span className="text-slate-500">—</span>
+                            )}
                           </td>
                           <td className="px-3 py-3"><StatusBadge status={order.order_status} /></td>
                           <td className="px-3 py-3 text-right text-slate-200">{formatMoney(order.price, order.currency_used)}</td>
@@ -568,7 +580,7 @@ export default function BuyPhoneNumbers({ user, onUserUpdated }: any) {
                             </div>
                           </td>
                         </tr>
-                      ))}
+                      ))}}
                     </tbody>
                   </table>
                 </div>
@@ -581,6 +593,12 @@ export default function BuyPhoneNumbers({ user, onUserUpdated }: any) {
                       </div>
                       <p className="mt-2 text-xs text-slate-400">{order.app} • {order.country}</p>
                       <p className="mt-2 text-xs text-slate-400">{order.status_message || 'Waiting for SMS OTP code...'}</p>
+                      {order.smsCode && (
+                        <div className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-500/10 px-3 py-2">
+                          <Mail size={14} className="text-emerald-400" />
+                          <span className="text-xs font-semibold text-emerald-400">Code: {order.smsCode}</span>
+                        </div>
+                      )}
                       <div className="mt-3 flex flex-wrap gap-2">
                         <button
                           onClick={() => handleCompletePhoneOrder(order._id)}
@@ -596,7 +614,7 @@ export default function BuyPhoneNumbers({ user, onUserUpdated }: any) {
                         </button>
                       </div>
                     </div>
-                  ))}
+                  ))}}
                 </div>
               </div>
             )}
@@ -624,6 +642,7 @@ export default function BuyPhoneNumbers({ user, onUserUpdated }: any) {
                     <thead className="bg-ink-850 text-left text-xs uppercase tracking-[0.2em] text-slate-500">
                       <tr>
                         <th className="px-3 py-3">Phone</th>
+                        <th className="px-3 py-3">Code</th>
                         <th className="px-3 py-3">Status</th>
                         <th className="px-3 py-3 text-right">Price</th>
                         <th className="px-3 py-3 text-right">Updated</th>
@@ -633,11 +652,21 @@ export default function BuyPhoneNumbers({ user, onUserUpdated }: any) {
                       {phoneOrderHistory.map((order) => (
                         <tr key={order._id} className="align-middle">
                           <td className="px-3 py-3 text-slate-300 font-mono">{order.phoneNumber || '—'}</td>
+                          <td className="px-3 py-3 text-slate-300">
+                            {order.smsCode ? (
+                              <div className="flex items-center gap-2">
+                                <Mail size={14} className="text-emerald-400" />
+                                <span className="font-mono text-emerald-400">{order.smsCode}</span>
+                              </div>
+                            ) : (
+                              <span className="text-slate-500">—</span>
+                            )}
+                          </td>
                           <td className="px-3 py-3"><StatusBadge status={order.order_status} /></td>
                           <td className="px-3 py-3 text-right text-slate-200">{formatMoney(order.price, order.currency_used)}</td>
                           <td className="px-3 py-3 text-right text-slate-400">{order.updated_at ? new Date(order.updated_at).toLocaleString() : '—'}</td>
                         </tr>
-                      ))}
+                      ))}}
                     </tbody>
                   </table>
                 </div>
@@ -649,9 +678,15 @@ export default function BuyPhoneNumbers({ user, onUserUpdated }: any) {
                         <StatusBadge status={order.order_status} />
                       </div>
                       <p className="mt-2 text-xs text-slate-400">{order.app} • {order.country}</p>
+                      {order.smsCode && (
+                        <div className="mt-2 flex items-center gap-2 rounded-lg bg-emerald-500/10 px-3 py-2">
+                          <Mail size={14} className="text-emerald-400" />
+                          <span className="text-xs font-semibold text-emerald-400">Code: {order.smsCode}</span>
+                        </div>
+                      )}
                       <p className="mt-2 text-xs text-slate-400">Updated {order.updated_at ? new Date(order.updated_at).toLocaleString() : '—'}</p>
                     </div>
-                  ))}
+                  ))}}
                 </div>
               </div>
             )}
