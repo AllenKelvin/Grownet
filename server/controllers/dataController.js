@@ -125,6 +125,18 @@ export async function createAllenDataHubPurchase(req, res) {
 
     const updatedUser = await User.findByIdAndUpdate(user_id, { $inc: { wallet_balance: -price } }, { new: true })
 
+    const providerOrderId =
+      response?.order?.id ||
+      response?.order?.order ||
+      response?.order?._id ||
+      response?.order?.order_id ||
+      response?.order?.orderId ||
+      response?.id ||
+      response?.order?.reference ||
+      null
+
+    const orderStatus = response?.order?.status || response?.status || 'pending'
+
     const order = await DataOrder.create({
       user_id,
       data_package_id: null,
@@ -134,8 +146,8 @@ export async function createAllenDataHubPurchase(req, res) {
       package_description: 'Purchased via AllenDataHub API',
       price_local: price,
       currency_used: currency,
-      provider_order_id: response?.order?.id || null,
-      order_status: response?.order?.status || 'pending',
+      provider_order_id: providerOrderId,
+      order_status: orderStatus,
     })
 
     return res.status(201).json({ ok: true, order, provider: 'allendatahub', response, wallet_balance: updatedUser?.wallet_balance ?? userBalance })
