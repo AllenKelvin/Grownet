@@ -10,13 +10,13 @@ import { connectDB } from './db/mongodb.js'
 const app = express()
 const PORT = Number(process.env.PORT || 4000)
 const FRONTEND_URLS = [
-  process.env.FRONTEND_URL,
-  process.env.CORS_ORIGIN,
+  ...(process.env.FRONTEND_URL?.split(',') || []),
+  ...(process.env.CORS_ORIGIN?.split(',') || []),
   'https://cloudnum.org',
   'www.cloudnum.org',
   'http://localhost:5173',
   'http://127.0.0.1:5173'
-].filter(Boolean)
+].filter(Boolean).map(url => url.trim())
 
 app.use(cors({ origin: FRONTEND_URLS, credentials: true }))
 app.use(express.json())
