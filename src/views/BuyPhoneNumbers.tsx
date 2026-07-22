@@ -580,7 +580,7 @@ export default function BuyPhoneNumbers({ user, onUserUpdated }: any) {
                             </div>
                           </td>
                         </tr>
-                      )}}
+                      ))
                     </tbody>
                   </table>
                 </div>
