@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <radialGradient id="bgGrad" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#121824"/>
+      <stop offset="100%" stop-color="#05070a"/>
+    </radialGradient>
+
+    <!-- Logo Blue Gradient -->
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00D2FF"/>
+      <stop offset="50%" stop-color="#0072FF"/>
+      <stop offset="100%" stop-color="#004BFF"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Dark Background -->
+  <rect width="800" height="800" fill="url(#bgGrad)"/>
+
+  <!-- Main Icon Group -->
+  <g transform="translate(0, -30)">
+    <!-- Cloud & Phone Integrated Path -->
+    <path d="M 320 440 
+             A 65 65 0 0 1 230 350 
+             A 85 85 0 0 1 350 210 
+             A 115 115 0 0 1 540 240 
+             A 75 75 0 0 1 570 380 
+             A 60 60 0 0 1 520 440 
+             L 480 440 
+             C 470 410 470 380 470 290 
+             C 470 270 455 255 435 255 
+             L 365 255 
+             C 345 255 330 270 330 290 
+             L 330 440 
+             Z" 
+          fill="none" 
+          stroke="url(#blueGrad)" 
+          stroke-width="28" 
+          stroke-linecap="round" 
+          stroke-linejoin="round"/>
+
+    <!-- Inner Smartphone Body -->
+    <rect x="345" y="270" width="110" height="190" rx="24" fill="none" stroke="url(#blueGrad)" stroke-width="12"/>
+    
+    <!-- Phone Notch -->
+    <path d="M 385 270 L 415 270" stroke="url(#blueGrad)" stroke-width="8" stroke-linecap="round"/>
+
+    <!-- Keypad Grid (3x3 Dots) -->
+    <g fill="url(#blueGrad)">
+      <circle cx="375" cy="325" r="7"/>
+      <circle cx="400" cy="325" r="7"/>
+      <circle cx="425" cy="325" r="7"/>
+
+      <circle cx="375" cy="355" r="7"/>
+      <circle cx="400" cy="355" r="7"/>
+      <circle cx="425" cy="355" r="7"/>
+
+      <circle cx="375" cy="385" r="7"/>
+      <circle cx="400" cy="385" r="7"/>
+      <circle cx="425" cy="385" r="7"/>
+    </g>
+  </g>
+
+  <!-- Typography Section -->
+  <!-- Main Brand Name -->
+  <text x="400" y="560" font-family="Inter, Montserrat, Arial, sans-serif" font-size="82" font-weight="800" text-anchor="middle">
+    <tspan fill="#FFFFFF">Cloud</tspan><tspan fill="url(#blueGrad)">Num</tspan>
+  </text>
+
+  <!-- Tagline -->
+  <text x="400" y="615" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="500" fill="#A0AEC0" text-anchor="middle" letter-spacing="1">
+    Global Virtual Numbers. <tspan fill="#00A3FF">Instant. Reliable. Secure.</tspan>
+  </text>
+
+  <!-- Bottom Divider & Globe Icon -->
+  <path d="M 260 660 L 370 660 M 430 660 L 540 660" stroke="#1A365D" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="400" cy="660" r="14" fill="none" stroke="url(#blueGrad)" stroke-width="2"/>
+  <ellipse cx="400" cy="660" rx="6" ry="14" fill="none" stroke="url(#blueGrad)" stroke-width="2"/>
+  <path d="M 386 660 L 414 660" stroke="url(#blueGrad)" stroke-width="2"/>
+</svg>
