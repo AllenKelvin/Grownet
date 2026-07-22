@@ -225,7 +225,7 @@ export default function BuyPhoneNumbers({ user, onUserUpdated }: any) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           country: selectedCountryMeta.value,
-          product: selectedProductMeta,
+          product: selectedProductMeta.id,
           currency,
           user_id: user?._id,
           price: localizedPrice,
